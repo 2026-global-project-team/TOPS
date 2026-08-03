@@ -396,7 +396,7 @@ class _ExplorePageState extends State<ExplorePage> {
   Widget _buildMapButtons() {
     return Positioned(
       right: 16,
-      bottom: _selectedPlace == null ? 24 : 340,
+      bottom: _selectedPlace == null ? 120 : 380,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
