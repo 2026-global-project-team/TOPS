@@ -198,19 +198,16 @@ class _MainShellState extends State<MainShell>
 
   // 가운데 PNG 버튼
   Widget _buildCenterButton() {
-    return Transform.translate(
-      offset: const Offset(15, 0),
-      child: GestureDetector(
-        onTap: _toggleQuickMenu,
-        child: RotationTransition(
-          turns: _rotationAnimation,
-          child: SizedBox(
-            width: 78,
-            height: 78,
-            child: Image.asset(
-              'assets/images/icon_plus.png',
-              fit: BoxFit.contain,
-            ),
+    return GestureDetector(
+      onTap: _toggleQuickMenu,
+      child: RotationTransition(
+        turns: _rotationAnimation,
+        child: SizedBox(
+          width: 78,
+          height: 78,
+          child: Image.asset(
+            'assets/images/icon_plus.png',
+            fit: BoxFit.contain,
           ),
         ),
       ),
@@ -221,64 +218,62 @@ class _MainShellState extends State<MainShell>
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          16,
-          0,
-          16,
-          10,
-        ),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
         child: BottomAppBar(
           height: 76,
           padding: EdgeInsets.zero,
           color: Colors.black,
           elevation: 20,
-
-          // 바깥쪽 둥근 모서리 + 가운데 파인 홈
-          shape: AutomaticNotchedShape(
-            RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(32),
-            ),
-            const StadiumBorder(),
-          ),
-
+          shape: const CircularNotchedRectangle(),
           notchMargin: 7,
           clipBehavior: Clip.antiAlias,
           child: Row(
             children: [
               Expanded(
-                child: _buildNavigationItem(
-                  index: 0,
-                  icon: Icons.home_outlined,
-                  selectedIcon: Icons.home,
-                  label: 'Home',
-                ),
-              ),
-              Expanded(
-                child: _buildNavigationItem(
-                  index: 1,
-                  icon: Icons.search,
-                  selectedIcon: Icons.search,
-                  label: 'Explore',
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildNavigationItem(
+                        index: 0,
+                        icon: Icons.home_outlined,
+                        selectedIcon: Icons.home,
+                        label: 'Home',
+                      ),
+                    ),
+                    Expanded(
+                      child: _buildNavigationItem(
+                        index: 1,
+                        icon: Icons.search,
+                        selectedIcon: Icons.search,
+                        label: 'Explore',
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
-              // 가운데 버튼 자리
-              const SizedBox(width: 84),
+              const SizedBox(width: 78),
 
               Expanded(
-                child: _buildNavigationItem(
-                  index: 2,
-                  icon: Icons.bookmark_border,
-                  selectedIcon: Icons.bookmark,
-                  label: 'Archive',
-                ),
-              ),
-              Expanded(
-                child: _buildNavigationItem(
-                  index: 3,
-                  icon: Icons.person_outline,
-                  selectedIcon: Icons.person,
-                  label: 'Profile',
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildNavigationItem(
+                        index: 2,
+                        icon: Icons.bookmark_border,
+                        selectedIcon: Icons.bookmark,
+                        label: 'Archive',
+                      ),
+                    ),
+                    Expanded(
+                      child: _buildNavigationItem(
+                        index: 3,
+                        icon: Icons.person_outline,
+                        selectedIcon: Icons.person,
+                        label: 'Profile',
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -288,6 +283,7 @@ class _MainShellState extends State<MainShell>
     );
   }
 
+
   Widget _buildNavigationItem({
     required int index,
     required IconData icon,
@@ -296,7 +292,8 @@ class _MainShellState extends State<MainShell>
   }) {
     final isSelected = _selectedIndex == index;
 
-    return InkWell(
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: () {
         _selectPage(index);
       },
