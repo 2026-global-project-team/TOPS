@@ -1,7 +1,10 @@
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'Main/main_shell.dart';
+import 'package:tops/Screen/login/login.dart';
+
+late List<CameraDescription> cameras;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -10,6 +13,14 @@ Future<void> main() async {
     url: 'https://bpduvnezgiqvlqpeewyk.supabase.co',
     anonKey: 'sb_publishable_NIee2UdH2QM83aBagkzK6Q_IIBJyN73',
   );
+
+  try {
+    cameras = await availableCameras();
+  } catch (e) {
+    cameras = [];
+    debugPrint('카메라 초기화 실패: $e');
+  }
+
   runApp(const MyApp());
 }
 
@@ -24,7 +35,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
       ),
-      home: const MainShell(),
+      home: const LoginPage(),
     );
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../Explore/pages/explore_page.dart';
+import '../Screen/Explore/pages/explore_page.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
