@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../Screen/Explore/pages/explore_page.dart';
+import '../Screen/Home/home_page.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -11,7 +12,7 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell>
     with SingleTickerProviderStateMixin {
-  int _selectedIndex = 1;
+  int _selectedIndex = 1; //화면 뭐부터 띄울지 1은 Explore 0은 Home
   bool _isQuickMenuOpen = false;
 
   late final AnimationController _menuController;
@@ -20,10 +21,16 @@ class _MainShellState extends State<MainShell>
   late final Animation<double> _menuOpacityAnimation;
 
   final List<Widget> _pages = const [
-    _TemporaryPage(title: 'Home', icon: Icons.home_outlined),
+    HomePage(),
     ExplorePage(),
-    _TemporaryPage(title: 'Archive', icon: Icons.bookmark_border),
-    _TemporaryPage(title: 'Profile', icon: Icons.person_outline),
+    _TemporaryPage(
+      title: 'Archive',
+      icon: Icons.bookmark_border,
+    ),
+    _TemporaryPage(
+      title: 'Profile',
+      icon: Icons.person_outline,
+    ),
   ];
 
   @override
