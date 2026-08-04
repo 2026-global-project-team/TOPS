@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'auth_text_field.dart';
 import 'arrow_action_button.dart';
 import 'social_login_section.dart';
+import 'package:tops/services/auth_service.dart';
 
 class SignupFormStep extends StatefulWidget {
   final VoidCallback onNext;
@@ -99,11 +101,67 @@ class _SignupFormStepState extends State<SignupFormStep> {
   }
 
   Future<void> _signInWithApple() async {
-    debugPrint('Apple 회원가입');
+    try {
+      final launched =
+      await AuthService.signInWithApple();
+
+      if (!launched && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Apple 로그인 화면을 열지 못했습니다.',
+            ),
+          ),
+        );
+      }
+    } on AuthException catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Apple 로그인 실패: ${error.message}',
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> _signInWithGoogle() async {
-    debugPrint('Google 회원가입');
+    try {
+      final launched =
+      await AuthService.signInWithGoogle();
+
+      if (!launched && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Google 로그인 화면을 열지 못했습니다.',
+            ),
+          ),
+        );
+      }
+    } on AuthException catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Google 로그인 실패: ${error.message}',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Google 로그인 중 오류가 발생했습니다: $error',
+          ),
+        ),
+      );
+    }
   }
 
   @override

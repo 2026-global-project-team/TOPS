@@ -1,8 +1,23 @@
 import 'package:flutter/material.dart';
 
 class SignupHeader extends StatelessWidget {
-  const SignupHeader({super.key});
+  final int currentStep;
 
+  const SignupHeader({
+    super.key,
+    required this.currentStep,
+  });
+
+  double getProgress(){
+    if(currentStep == 0){
+      return 0.333;
+    }
+    else if(currentStep >= 1 && currentStep <= 3){
+      return 0.666;
+    }
+    else if(currentStep == 4) return 1.0;
+    else return 0.333;
+  }
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -35,11 +50,11 @@ class SignupHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          const LinearProgressIndicator(
-            value: 0.33,
+          LinearProgressIndicator(
+            value: getProgress(),
             minHeight: 3,
             backgroundColor: Colors.white38,
-            valueColor: AlwaysStoppedAnimation<Color>(
+            valueColor: const AlwaysStoppedAnimation<Color>(
               Colors.white,
             ),
           ),
