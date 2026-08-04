@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'widgets/login_background.dart';
-import '../../widgets/auth_text_field.dart';
-import '../../widgets/Social_login_section.dart';
+import 'widgets/auth_text_field.dart';
+import 'widgets/Social_login_section.dart';
 import 'signUp.dart';
 
 class LoginPage extends StatefulWidget {
