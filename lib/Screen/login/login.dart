@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../Widgets/login_background.dart';
+import 'widgets/login_background.dart';
 import '../../widgets/auth_text_field.dart';
 import '../../widgets/Social_login_section.dart';
+import 'signUp.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -52,6 +53,10 @@ class _LoginPageState extends State<LoginPage> {
       // TODO: Supabase 이메일 로그인 연결
       debugPrint('Username: $username');
 
+      //await supabase.auth.signInWithPassword(
+      //   email: username,
+      //   password: password,
+      // );
       await Future<void>.delayed(
         const Duration(seconds: 1),
       );
@@ -75,25 +80,31 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _signInWithApple() async {
     // TODO: Supabase Apple 로그인 연결
     debugPrint('Apple 로그인');
+    //await Supabase.instance.client.auth.signInWithOAuth(
+    //   OAuthProvider.apple,
+    // );
   }
 
   Future<void> _signInWithGoogle() async {
     // TODO: Supabase Google 로그인 연결
     debugPrint('Google 로그인');
+    //await Supabase.instance.client.auth.signInWithOAuth(
+    //   OAuthProvider.google,
+    // );
   }
 
   void _moveToSignup() {
     debugPrint('회원가입 화면 이동');
 
     // SignupPage를 만든 후 아래 코드 사용
-    /*
+
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => const SignupPage(),
       ),
     );
-    */
+
   }
 
   @override
