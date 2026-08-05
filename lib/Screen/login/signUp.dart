@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:tops/Screen/login/widgets/login_background.dart';
 import 'package:tops/Screen/login/widgets/signup_header.dart';
+import 'package:tops/Screen/Explore/pages/explore_page.dart';
 import 'widgets/onboarding_step.dart';
 import 'widgets/signup_form_step.dart';
+import 'signup_complete_step.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -20,7 +22,9 @@ class _SignupPageState extends State<SignupPage> {
     return loginBackground(
       child: Column(
         children: [
-          const SignupHeader(),
+          SignupHeader (
+            currentStep: _currentStep,
+          ),
 
           Expanded(
             child: _buildStepContent(),
@@ -42,7 +46,7 @@ class _SignupPageState extends State<SignupPage> {
 
       case 1:
         return OnboardingStep(
-          imagePath: 'assets/images/onboarding_1.jpg',
+          imagePath: 'assets/images/onboarding_1.png',
           title: 'Discover more than the landmarks',
           description:
           'Find hidden gems and explore local places beyond the tourist trail.',
@@ -53,7 +57,7 @@ class _SignupPageState extends State<SignupPage> {
 
       case 2:
         return OnboardingStep(
-          imagePath: 'assets/images/onboarding_2.jpg',
+          imagePath: 'assets/images/onboarding_2.png',
           title: 'Your journey supports\nlocal communities',
           description:
           'Discover local cafés, shops, and cultural spaces that make each neighborhood unique.',
@@ -64,7 +68,7 @@ class _SignupPageState extends State<SignupPage> {
 
       case 3:
         return OnboardingStep(
-          imagePath: 'assets/images/onboarding_3.jpg',
+          imagePath: 'assets/images/onboarding_3.png',
           title: 'Discover locally. Travel responsibly.',
           description:
           'Explore local places and support the communities behind them.',
@@ -74,8 +78,17 @@ class _SignupPageState extends State<SignupPage> {
         );
 
       case 4:
-        // return const SignupCompleteStep();
-
+        return SignupCompleteStep(
+          onStartExploring: () {
+            // 나중에 메인 화면을 만든 뒤 연결
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const ExplorePage(),
+              ),
+            );
+          },
+        );
       default:
         return const SizedBox.shrink();
     }

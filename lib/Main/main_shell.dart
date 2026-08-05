@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-
 import '../Screen/Explore/pages/explore_page.dart';
+import '../Screen/Home/home_page.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -11,9 +11,7 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell>
     with SingleTickerProviderStateMixin {
-  static const Color _primaryColor = Color(0xFF4A5FD3);
-
-  int _selectedIndex = 1;
+  int _selectedIndex = 1; //화면 뭐부터 띄울지 1은 Explore 0은 Home
   bool _isQuickMenuOpen = false;
 
   late final AnimationController _menuController;
@@ -22,10 +20,7 @@ class _MainShellState extends State<MainShell>
   late final Animation<double> _menuOpacityAnimation;
 
   final List<Widget> _pages = const [
-    _TemporaryPage(
-      title: 'Home',
-      icon: Icons.home_outlined,
-    ),
+    HomePage(),
     ExplorePage(),
     _TemporaryPage(
       title: 'Archive',
@@ -43,23 +38,23 @@ class _MainShellState extends State<MainShell>
 
     _menuController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 250),
+      duration: const Duration(milliseconds: 260),
     );
 
-    // + 버튼이 45도 회전하면서 × 모양으로 바뀜
+    // 기본 X 형태 이미지 기준 45도(0.125턴) 회전하여 + 모양이 되는 애니메이션
     _rotationAnimation = Tween<double>(
       begin: 0,
       end: 0.125,
     ).animate(
       CurvedAnimation(
         parent: _menuController,
-        curve: Curves.easeInOut,
+        curve: Curves.easeInOutCubic,
       ),
     );
 
     _menuScaleAnimation = Tween<double>(
-      begin: 0.85,
-      end: 1,
+      begin: 0.9,
+      end: 1.0,
     ).animate(
       CurvedAnimation(
         parent: _menuController,
@@ -69,7 +64,7 @@ class _MainShellState extends State<MainShell>
 
     _menuOpacityAnimation = Tween<double>(
       begin: 0,
-      end: 1,
+      end: 1.0,
     ).animate(
       CurvedAnimation(
         parent: _menuController,
@@ -91,9 +86,7 @@ class _MainShellState extends State<MainShell>
   }
 
   void _closeQuickMenu() {
-    if (!_isQuickMenuOpen) {
-      return;
-    }
+    if (!_isQuickMenuOpen) return;
 
     setState(() {
       _isQuickMenuOpen = false;
@@ -104,7 +97,6 @@ class _MainShellState extends State<MainShell>
 
   void _selectPage(int index) {
     _closeQuickMenu();
-
     setState(() {
       _selectedIndex = index;
     });
@@ -112,37 +104,8 @@ class _MainShellState extends State<MainShell>
 
   void _showComingSoon(String featureName) {
     _closeQuickMenu();
-
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$featureName 화면을 준비 중입니다.'),
-      ),
-    );
-  }
-
-  Widget _buildQuickMenuItem({
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
-        child: SizedBox(
-          width: double.infinity,
-          height: 72,
-          child: Center(
-            child: Text(
-              title,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ),
-      ),
+      SnackBar(content: Text('$featureName 화면을 준비 중입니다.')),
     );
   }
 
@@ -153,10 +116,10 @@ class _MainShellState extends State<MainShell>
         scale: _menuScaleAnimation,
         alignment: Alignment.bottomCenter,
         child: Container(
-          width: 230,
+          width: 232,
           decoration: BoxDecoration(
             color: const Color(0xFFF7F8FF),
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(22),
             boxShadow: const [
               BoxShadow(
                 color: Colors.black26,
@@ -170,23 +133,17 @@ class _MainShellState extends State<MainShell>
             children: [
               _buildQuickMenuItem(
                 title: 'Check-In',
-                onTap: () {
-                  _showComingSoon('Check-In');
-                },
+                onTap: () => _showComingSoon('Check-In'),
               ),
-              const Divider(height: 1),
+              const Divider(height: 1, color: Color(0xFFE5E7EB)),
               _buildQuickMenuItem(
                 title: 'New Story',
-                onTap: () {
-                  _showComingSoon('New Story');
-                },
+                onTap: () => _showComingSoon('New Story'),
               ),
-              const Divider(height: 1),
+              const Divider(height: 1, color: Color(0xFFE5E7EB)),
               _buildQuickMenuItem(
                 title: 'Add a Spot',
-                onTap: () {
-                  _showComingSoon('Add a Spot');
-                },
+                onTap: () => _showComingSoon('Add a Spot'),
               ),
             ],
           ),
@@ -195,16 +152,51 @@ class _MainShellState extends State<MainShell>
     );
   }
 
+  Widget _buildQuickMenuItem({
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: SizedBox(
+        width: double.infinity,
+        height: 72,
+        child: Center(
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF5B5B61),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
-  // 가운데 PNG 버튼
+  /// 메탈릭 이미지 에셋 + 회전 애니메이션
   Widget _buildCenterButton() {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: _toggleQuickMenu,
-      child: RotationTransition(
-        turns: _rotationAnimation,
-        child: SizedBox(
-          width: 78,
-          height: 78,
+      child: Container(
+        width: 84,
+        height: 84,
+        padding: const EdgeInsets.all(2),
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 12,
+              offset: Offset(0, 5),
+            ),
+          ],
+        ),
+        child: RotationTransition(
+          turns: _rotationAnimation,
           child: Image.asset(
             'assets/images/icon_plus.png',
             fit: BoxFit.contain,
@@ -219,62 +211,86 @@ class _MainShellState extends State<MainShell>
       top: false,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-        child: BottomAppBar(
-          height: 76,
-          padding: EdgeInsets.zero,
-          color: Colors.black,
-          elevation: 20,
-          shape: const CircularNotchedRectangle(),
-          notchMargin: 7,
-          clipBehavior: Clip.antiAlias,
-          child: Row(
+        child: SizedBox(
+          height: 104,
+          child: Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.bottomCenter,
             children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _buildNavigationItem(
-                        index: 0,
-                        icon: Icons.home_outlined,
-                        selectedIcon: Icons.home,
-                        label: 'Home',
-                      ),
+              // 바텀바 배경 (자연스럽게 우묵하게 파이는 베지어 노치 곡선)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: PhysicalShape(
+                  clipper: const _FigmaBottomBarClipper(
+                    cornerRadius: 34,
+                    notchWidth: 98,
+                    notchDepth: 38,
+                  ),
+                  color: Colors.black,
+                  elevation: 12,
+                  shadowColor: Colors.black38,
+                  clipBehavior: Clip.antiAlias,
+                  child: SizedBox(
+                    height: 78,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _buildNavigationItem(
+                                  index: 0,
+                                  icon: Icons.home_outlined,
+                                  selectedIcon: Icons.home,
+                                  label: 'Home',
+                                ),
+                              ),
+                              Expanded(
+                                child: _buildNavigationItem(
+                                  index: 1,
+                                  icon: Icons.search,
+                                  selectedIcon: Icons.search,
+                                  label: 'Explore',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // 중앙 버튼 공간
+                        const SizedBox(width: 90),
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _buildNavigationItem(
+                                  index: 2,
+                                  icon: Icons.bookmark_border,
+                                  selectedIcon: Icons.bookmark,
+                                  label: 'Archive',
+                                ),
+                              ),
+                              Expanded(
+                                child: _buildNavigationItem(
+                                  index: 3,
+                                  icon: Icons.person_outline,
+                                  selectedIcon: Icons.person,
+                                  label: 'Profile',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    Expanded(
-                      child: _buildNavigationItem(
-                        index: 1,
-                        icon: Icons.search,
-                        selectedIcon: Icons.search,
-                        label: 'Explore',
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
-
-              const SizedBox(width: 78),
-
-              Expanded(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _buildNavigationItem(
-                        index: 2,
-                        icon: Icons.bookmark_border,
-                        selectedIcon: Icons.bookmark,
-                        label: 'Archive',
-                      ),
-                    ),
-                    Expanded(
-                      child: _buildNavigationItem(
-                        index: 3,
-                        icon: Icons.person_outline,
-                        selectedIcon: Icons.person,
-                        label: 'Profile',
-                      ),
-                    ),
-                  ],
-                ),
+              // 플로팅 메탈릭 버튼
+              Positioned(
+                top: 0,
+                child: _buildCenterButton(),
               ),
             ],
           ),
@@ -282,7 +298,6 @@ class _MainShellState extends State<MainShell>
       ),
     );
   }
-
 
   Widget _buildNavigationItem({
     required int index,
@@ -294,30 +309,22 @@ class _MainShellState extends State<MainShell>
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () {
-        _selectPage(index);
-      },
+      onTap: () => _selectPage(index),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             isSelected ? selectedIcon : icon,
-            color: isSelected
-                ? Colors.white
-                : const Color(0xFF9B9BA5),
-            size: 24,
+            color: isSelected ? Colors.white : const Color(0xFF9B9BA5),
+            size: 25,
           ),
-          const SizedBox(height: 5),
+          const SizedBox(height: 6),
           Text(
             label,
             style: TextStyle(
-              color: isSelected
-                  ? Colors.white
-                  : const Color(0xFF9B9BA5),
+              color: isSelected ? Colors.white : const Color(0xFF9B9BA5),
               fontSize: 11,
-              fontWeight: isSelected
-                  ? FontWeight.w600
-                  : FontWeight.w400,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
             ),
           ),
         ],
@@ -334,9 +341,7 @@ class _MainShellState extends State<MainShell>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // body가 하단 바 뒤까지 이어져서 흰 공간이 생기지 않음
       extendBody: true,
-
       body: Stack(
         alignment: Alignment.bottomCenter,
         children: [
@@ -344,36 +349,86 @@ class _MainShellState extends State<MainShell>
             index: _selectedIndex,
             children: _pages,
           ),
-
-          // 메뉴가 열렸을 때 화면을 살짝 어둡게
           if (_isQuickMenuOpen)
             Positioned.fill(
               child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onTap: _closeQuickMenu,
                 child: Container(
-                  color: Colors.black.withValues(
-                    alpha: 0.12,
-                  ),
+                  color: Colors.black.withValues(alpha: 0.12),
                 ),
               ),
             ),
-
-          // + 버튼 위에 뜨는 빠른 메뉴
           if (_isQuickMenuOpen)
             Positioned(
-              bottom: 115,
+              bottom: 138,
               child: _buildQuickMenu(),
             ),
         ],
       ),
-
-      // 이 두 항목이 있어야 가운데 홈이 생김
-      floatingActionButton: _buildCenterButton(),
-      floatingActionButtonLocation:
-      FloatingActionButtonLocation.centerDocked,
-
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
+  }
+}
+
+/// 완벽하게 부드러운 S자 곡선(Smooth Bezier) 노치를 생성하는 커스텀 클리퍼
+class _FigmaBottomBarClipper extends CustomClipper<Path> {
+  const _FigmaBottomBarClipper({
+    required this.cornerRadius,
+    required this.notchWidth,
+    required this.notchDepth,
+  });
+
+  final double cornerRadius;
+  final double notchWidth;
+  final double notchDepth;
+
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    final cx = size.width / 2;
+    final halfW = notchWidth / 2;
+
+    path.moveTo(cornerRadius, 0);
+
+    // 노치 진입 전 상단 라인
+    path.lineTo(cx - halfW, 0);
+
+    // 노치 좌측 내리막 곡선 (부드러운 S자 베지어 곡선)
+    path.cubicTo(
+      cx - (halfW * 0.62), 0,
+      cx - (halfW * 0.42), notchDepth,
+      cx, notchDepth,
+    );
+
+    // 노치 우측 오르막 곡선 (부드러운 S자 베지어 곡선)
+    path.cubicTo(
+      cx + (halfW * 0.42), notchDepth,
+      cx + (halfW * 0.62), 0,
+      cx + halfW, 0,
+    );
+
+    // 노치 탈출 후 상단 라인
+    path.lineTo(size.width - cornerRadius, 0);
+
+    // 바깥쪽 모서리 곡선 (알약 형태)
+    path.quadraticBezierTo(size.width, 0, size.width, cornerRadius);
+    path.lineTo(size.width, size.height - cornerRadius);
+    path.quadraticBezierTo(size.width, size.height, size.width - cornerRadius, size.height);
+    path.lineTo(cornerRadius, size.height);
+    path.quadraticBezierTo(0, size.height, 0, size.height - cornerRadius);
+    path.lineTo(0, cornerRadius);
+    path.quadraticBezierTo(0, 0, cornerRadius, 0);
+
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant _FigmaBottomBarClipper oldClipper) {
+    return cornerRadius != oldClipper.cornerRadius ||
+        notchWidth != oldClipper.notchWidth ||
+        notchDepth != oldClipper.notchDepth;
   }
 }
 
