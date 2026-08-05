@@ -5,7 +5,6 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
-
 import '../services/place_service.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 
@@ -803,44 +802,52 @@ class _ExplorePageState extends State<ExplorePage> {
               TileLayer(
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.example.tops',
+
               ),
-        MarkerClusterLayerWidget(
-          options: MarkerClusterLayerOptions(
-            markers: _buildPlaceMarkers(),
-            maxClusterRadius: 55,
-            size: const Size(46, 46),
-            maxZoom: 16,
-            padding: const EdgeInsets.all(50),
-            zoomToBoundsOnClick: true,
-            builder: (context, markers) {
-              return Container(
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: _primaryColor,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 3,
-                  ),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 6,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
+              // RichAttributionWidget(
+              //   attributions: [
+              //     TextSourceAttribution(
+              //       'OpenStreetMap contributors',
+              //     ),
+              //   ],
+              // ),
+              MarkerClusterLayerWidget(
+                options: MarkerClusterLayerOptions(
+                  markers: _buildPlaceMarkers(),
+                  maxClusterRadius: 55,
+                  size: const Size(46, 46),
+                  maxZoom: 16,
+                  padding: const EdgeInsets.all(50),
+                  zoomToBoundsOnClick: true,
+                  builder: (context, markers) {
+                    return Container(
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: _primaryColor,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white,
+                          width: 3,
+                        ),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 6,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        '${markers.length}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    );
+                  },
                 ),
-                child: Text(
-                  '${markers.length}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
+              ),
               if (_currentLocation != null) _buildCurrentLocationMarker(),
               const RichAttributionWidget(
                 attributions: [

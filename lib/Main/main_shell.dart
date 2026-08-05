@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:tops/Screen/My/profile_page.dart';
 import '../Screen/Explore/pages/explore_page.dart';
 import '../Screen/Home/home_page.dart';
+import '../Screen/Archive/archive_page.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -22,14 +24,8 @@ class _MainShellState extends State<MainShell>
   final List<Widget> _pages = const [
     HomePage(),
     ExplorePage(),
-    _TemporaryPage(
-      title: 'Archive',
-      icon: Icons.bookmark_border,
-    ),
-    _TemporaryPage(
-      title: 'Profile',
-      icon: Icons.person_outline,
-    ),
+    ArchivePage(),
+    ProfilePage(),
   ];
 
   @override
