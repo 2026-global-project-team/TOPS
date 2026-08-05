@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tops/Screen/Explore/pages/explore_page.dart';
 import 'widgets/login_background.dart';
 import 'widgets/auth_text_field.dart';
 import 'widgets/Social_login_section.dart';
@@ -59,7 +60,7 @@ class _LoginPageState extends State<LoginPage> {
       // TODO: Supabase 이메일 로그인 연결
       debugPrint('Username: $username');
 
-      //await supabase.auth.signInWithPassword(
+      // await supabase.auth.signInWithPassword(
       //   email: username,
       //   password: password,
       // );
@@ -142,22 +143,14 @@ class _LoginPageState extends State<LoginPage> {
             final event = authState.event;
             final session = authState.session;
 
-            if (event == AuthChangeEvent.signedIn &&
-                session != null &&
-                mounted) {
-              debugPrint(
-                'Google 로그인 성공: ${session.user.email}',
-              );
-
+            if (event == AuthChangeEvent.signedIn && session != null && mounted) {
               // TODO: 로그인 완료 후 이동할 화면으로 변경
-              /*
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const MainPage(),
-          ),
-        );
-        */
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ExplorePage(),
+                ),
+              );
             }
           },
           onError: (error, stackTrace) {
