@@ -3,6 +3,7 @@ import 'package:tops/Screen/My/profile_page.dart';
 import '../Screen/Explore/pages/explore_page.dart';
 import '../Screen/Home/home_page.dart';
 import '../Screen/Archive/archive_page.dart';
+import '../Wish/wish_page.dart';
 
 class MainShell extends StatefulWidget {
   final int? index;
@@ -152,7 +153,16 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
               const Divider(height: 1, color: Color(0xFFE5E7EB)),
               _buildQuickMenuItem(
                 title: 'Wishlist',
-                onTap: () => _showComingSoon('Wishlist'),
+                onTap: () {
+                  _closeQuickMenu();
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const WishPage(),
+                    ),
+                  );
+                },
               ),
             ],
           ),
