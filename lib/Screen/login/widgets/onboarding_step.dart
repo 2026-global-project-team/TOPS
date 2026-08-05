@@ -27,16 +27,28 @@ class OnboardingStep extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const SizedBox(height: 60),
+          const SizedBox(height: 87),
 
-          ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: Image.asset(
-              imagePath,
-              width: double.infinity,
-              height: 260,
-              fit: BoxFit.cover,
-            ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final imageWidth = constraints.maxWidth * 0.85;
+
+              return Center(
+                child: SizedBox(
+                  width: imageWidth,
+                  child: AspectRatio(
+                    aspectRatio: 4 / 5,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Image.asset(
+                        imagePath,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
 
           const SizedBox(height: 20),

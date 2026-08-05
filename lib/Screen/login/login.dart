@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tops/Screen/Explore/pages/explore_page.dart';
 import 'widgets/login_background.dart';
 import 'widgets/auth_text_field.dart';
 import 'widgets/Social_login_section.dart';
 import 'signUp.dart';
+import 'dart:async';
+import 'package:tops/services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -14,6 +18,8 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  StreamSubscription<AuthState>? _authSubscription;
+
   final TextEditingController _usernameController =
   TextEditingController();
 
@@ -25,6 +31,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void dispose() {
+    _authSubscription?.cancel();
     _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -53,7 +60,7 @@ class _LoginPageState extends State<LoginPage> {
       // TODO: Supabase 이메일 로그인 연결
       debugPrint('Username: $username');
 
-      //await supabase.auth.signInWithPassword(
+      // await supabase.auth.signInWithPassword(
       //   email: username,
       //   password: password,
       // );
@@ -86,11 +93,30 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _signInWithGoogle() async {
-    // TODO: Supabase Google 로그인 연결
-    debugPrint('Google 로그인');
-    //await Supabase.instance.client.auth.signInWithOAuth(
-    //   OAuthProvider.google,
-    // );
+    try {
+      final launched =
+      await AuthService.signInWithGoogle();
+
+      if (!launched && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Google 로그인 화면을 열지 못했습니다.',
+            ),
+          ),
+        );
+      }
+    } on AuthException catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Google 로그인 실패: ${error.message}',
+          ),
+        ),
+      );
+    }
   }
 
   void _moveToSignup() {
@@ -105,6 +131,32 @@ class _LoginPageState extends State<LoginPage> {
       ),
     );
 
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    _authSubscription =
+        Supabase.instance.client.auth.onAuthStateChange.listen(
+              (authState) {
+            final event = authState.event;
+            final session = authState.session;
+
+            if (event == AuthChangeEvent.signedIn && session != null && mounted) {
+              // TODO: 로그인 완료 후 이동할 화면으로 변경
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ExplorePage(),
+                ),
+              );
+            }
+          },
+          onError: (error, stackTrace) {
+            debugPrint('인증 상태 감지 오류: $error');
+          },
+        );
   }
 
   @override
