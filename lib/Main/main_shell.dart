@@ -12,7 +12,7 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell>
     with SingleTickerProviderStateMixin {
-  int _selectedIndex = 1; //화면 뭐부터 띄울지 1은 Explore 0은 Home
+  int _selectedIndex = 0; //화면 뭐부터 띄울지 1은 Explore 0은 Home
   bool _isQuickMenuOpen = false;
 
   late final AnimationController _menuController;

@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'search_page.dart';
+
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -189,42 +189,24 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildSearchBar() {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const SearchPage(),
-          ),
-        );
-      },
-      child: Container(
-        height: 48,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF4F4F4),
-          borderRadius: BorderRadius.circular(25),
+  Widget _buildCategoryTabs() {
+    return const Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _CategoryText(
+          label: 'Home',
+          selected: true,
         ),
-        child: const Row(
-          children: [
-            Icon(
-              Icons.search,
-              size: 20,
-              color: Color(0xFF999999),
-            ),
-            SizedBox(width: 10),
-            Text(
-              'Start your local journey...',
-              style: TextStyle(
-                fontSize: 13,
-                color: Color(0xFF999999),
-              ),
-            ),
-          ],
+        _CategoryText(
+          label: 'Cafe',
         ),
-      ),
+        _CategoryText(
+          label: 'Restaurant',
+        ),
+        _CategoryText(
+          label: 'Culture',
+        ),
+      ],
     );
   }
 
