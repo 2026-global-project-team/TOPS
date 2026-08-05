@@ -138,8 +138,8 @@ class _MainShellState extends State<MainShell>
               ),
               const Divider(height: 1, color: Color(0xFFE5E7EB)),
               _buildQuickMenuItem(
-                title: 'Add a Spot',
-                onTap: () => _showComingSoon('Add a Spot'),
+                title: 'Wishlist',
+                onTap: () => _showComingSoon('Wishlist'),
               ),
             ],
           ),
