@@ -10,17 +10,11 @@ import '../Screen/Archive/widgets/story_card.dart';
 class WishPage extends StatefulWidget {
   const WishPage({
     super.key,
+    required this.onBackPressed,
     this.initialStories = const [],
   });
 
-  /// Archive 화면에서 이미 가지고 있는 Story 목록을 전달받는 용도
-  ///
-  /// 예시:
-  /// WishPage(
-  ///   initialStories: stories
-  ///       .where((story) => story.isWish)
-  ///       .toList(),
-  /// )
+  final VoidCallback onBackPressed;
   final List<Story> initialStories;
 
   @override
@@ -293,8 +287,8 @@ class _WishPageState extends State<WishPage> {
     return Scaffold(
       backgroundColor: Colors.white,
 
-      // MainShell 내부 화면이 아니라 Navigator.push로 여는 화면이므로
-      // 여기에는 bottomNavigationBar를 따로 넣지 않음
+      // MainShell의 숨겨진 4번 화면으로 표시되므로
+      // 하단 내비게이션 바는 MainShell에서 계속 표시됨
       body: SafeArea(
         child: Column(
           children: [
@@ -332,9 +326,7 @@ class _WishPageState extends State<WishPage> {
           const SizedBox(width: 8),
 
           IconButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
+            onPressed: widget.onBackPressed,
             icon: const Icon(
               Icons.arrow_back_ios_new,
               size: 22,

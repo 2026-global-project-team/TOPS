@@ -18,7 +18,9 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> with SingleTickerProviderStateMixin {
-  int _selectedIndex = 0; //화면 뭐부터 띄울지 1은 Explore 0은 Home
+  int _selectedIndex = 0;
+  int _previousIndex = 0;
+
   bool _isQuickMenuOpen = false;
 
   late final AnimationController _menuController;
@@ -26,16 +28,29 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
   late final Animation<double> _menuScaleAnimation;
   late final Animation<double> _menuOpacityAnimation;
 
-  final List<Widget> _pages = const [
-    HomePage(),
-    ExplorePage(),
-    ArchivePage(),
-    ProfilePage(),
-  ];
+  late final List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
+
+    _pages = [
+      const HomePage(),
+      const ExplorePage(),
+
+      ArchivePage(
+        onWishPressed: _openWishPage,
+        onProfilePressed: () {
+          _selectPage(3);
+        },
+      ),
+
+      const ProfilePage(),
+
+      WishPage(
+        onBackPressed: _closeWishPage,
+      ),
+    ];
 
     final receivedIndex = widget.index;
 
@@ -111,6 +126,23 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
       _selectedIndex = index;
     });
   }
+  void _openWishPage() {
+    _closeQuickMenu();
+
+    setState(() {
+      if (_selectedIndex != 4) {
+        _previousIndex = _selectedIndex;
+      }
+
+      _selectedIndex = 4;
+    });
+  }
+
+  void _closeWishPage() {
+    setState(() {
+      _selectedIndex = _previousIndex;
+    });
+  }
 
   void _showComingSoon(String featureName) {
     _closeQuickMenu();
@@ -153,16 +185,7 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
               const Divider(height: 1, color: Color(0xFFE5E7EB)),
               _buildQuickMenuItem(
                 title: 'Wishlist',
-                onTap: () {
-                  _closeQuickMenu();
-
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const WishPage(),
-                    ),
-                  );
-                },
+                onTap: _openWishPage,
               ),
             ],
           ),
@@ -324,7 +347,9 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
     required IconData selectedIcon,
     required String label,
   }) {
-    final isSelected = _selectedIndex == index;
+    final isSelected =
+        _selectedIndex == index ||
+            (_selectedIndex == 4 && index == 2);
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
