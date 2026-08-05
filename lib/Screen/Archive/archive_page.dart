@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:tops/Main/main_shell.dart';
+
+import '../../Main/widgets/app_top_bar.dart';
 import 'create_archive_page.dart';
 import 'models/story.dart';
-import '../../Main/widgets/app_top_bar.dart';
 import 'widgets/story_card.dart';
 import 'widgets/trip_summary_card.dart';
 
 class ArchivePage extends StatefulWidget {
-  const ArchivePage({super.key});
+  const ArchivePage({
+    super.key,
+    required this.onWishPressed,
+    required this.onProfilePressed,
+    required this.onTravelMapPressed,
+  });
+
+  final VoidCallback onWishPressed;
+  final VoidCallback onProfilePressed;
+  final VoidCallback onTravelMapPressed;
 
   @override
   State<ArchivePage> createState() => _ArchivePageState();
@@ -49,18 +58,12 @@ class _ArchivePageState extends State<ArchivePage> {
     );
   }
 
-  Future<void> _openNewStoryPage() async {
-    // 추후 StoryCreatePage 연결
-  }
-
   void _toggleWish(String storyId) {
     final index = _stories.indexWhere(
           (story) => story.id == storyId,
     );
 
-    if (index == -1) {
-      return;
-    }
+    if (index == -1) return;
 
     setState(() {
       final selectedStory = _stories[index];
@@ -75,9 +78,6 @@ class _ArchivePageState extends State<ArchivePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F5FF),
-
-      // MainShell이 이미 하단바를 담당하므로
-      // 여기에는 bottomNavigationBar를 넣지 않음
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
@@ -86,20 +86,12 @@ class _ArchivePageState extends State<ArchivePage> {
                 userName: 'Eunji',
                 location: 'London',
                 profileImageUrl: null,
-                onProfilePressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const MainShell(index: 3),
-                    ),
-                  );
-                },
+                onProfilePressed: widget.onProfilePressed,
                 onLocationPressed: () {
                   debugPrint('지역 선택');
                 },
               ),
             ),
-
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.only(top: 8),
@@ -117,20 +109,14 @@ class _ArchivePageState extends State<ArchivePage> {
                       ),
                     );
                   },
-                  onTravelMapPressed: () {
-                    debugPrint('Travel Map');
-                  },
-                  onWishPressed: () {
-                    debugPrint('Wish');
-                  },
+                  onTravelMapPressed: widget.onTravelMapPressed,
+                  onWishPressed: widget.onWishPressed,
                 ),
               ),
             ),
-
             const SliverToBoxAdapter(
               child: SizedBox(height: 20),
             ),
-
             if (_stories.isEmpty)
               const SliverFillRemaining(
                 hasScrollBody: false,
@@ -161,9 +147,7 @@ class _ArchivePageState extends State<ArchivePage> {
                         key: ValueKey(story.id),
                         story: story,
                         onPressed: () {
-                          debugPrint(
-                            '${story.title} 상세 화면 이동',
-                          );
+                          debugPrint('${story.title} 상세 화면 이동');
                         },
                         onWishPressed: () {
                           _toggleWish(story.id);
