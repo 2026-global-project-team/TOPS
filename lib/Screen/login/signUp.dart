@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:tops/Screen/login/widgets/login_background.dart';
 import 'package:tops/Screen/login/widgets/signup_header.dart';
 import 'package:tops/Screen/Explore/pages/explore_page.dart';
+import 'package:tops/Main/main_shell.dart';
 import 'widgets/onboarding_step.dart';
 import 'widgets/signup_form_step.dart';
 import 'signup_complete_step.dart';
@@ -84,7 +85,7 @@ class _SignupPageState extends State<SignupPage> {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (_) => const ExplorePage(),
+                builder: (_) => const MainShell(),
               ),
             );
           },

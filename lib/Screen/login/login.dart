@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tops/Main/main_shell.dart';
 import 'package:tops/Screen/Explore/pages/explore_page.dart';
 import 'widgets/login_background.dart';
 import 'widgets/auth_text_field.dart';
@@ -148,7 +149,7 @@ class _LoginPageState extends State<LoginPage> {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => const ExplorePage(),
+                  builder: (_) => const MainShell(),
                 ),
               );
             }
