@@ -11,10 +11,12 @@ class ArchivePage extends StatefulWidget {
     super.key,
     required this.onWishPressed,
     required this.onProfilePressed,
+    required this.onTravelMapPressed,
   });
 
   final VoidCallback onWishPressed;
   final VoidCallback onProfilePressed;
+  final VoidCallback onTravelMapPressed;
 
   @override
   State<ArchivePage> createState() => _ArchivePageState();
@@ -107,9 +109,7 @@ class _ArchivePageState extends State<ArchivePage> {
                       ),
                     );
                   },
-                  onTravelMapPressed: () {
-                    debugPrint('Travel Map');
-                  },
+                  onTravelMapPressed: widget.onTravelMapPressed,
                   onWishPressed: widget.onWishPressed,
                 ),
               ),

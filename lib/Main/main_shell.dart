@@ -4,6 +4,7 @@ import '../Screen/Explore/pages/explore_page.dart';
 import '../Screen/Home/home_page.dart';
 import '../Screen/Archive/archive_page.dart';
 import '../Wish/wish_page.dart';
+import '../Screen/Archive/travel_map_page.dart';
 
 class MainShell extends StatefulWidget {
   final int? index;
@@ -20,6 +21,7 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> with SingleTickerProviderStateMixin {
   int _selectedIndex = 0;
   int _previousIndex = 0;
+  int _travelMapPreviousIndex = 2;
 
   bool _isQuickMenuOpen = false;
 
@@ -43,6 +45,7 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
         onProfilePressed: () {
           _selectPage(3);
         },
+        onTravelMapPressed: _openTravelMapPage,
       ),
 
       const ProfilePage(),
@@ -50,13 +53,16 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
       WishPage(
         onBackPressed: _closeWishPage,
       ),
+      TravelMapPage(
+        onBackPressed: _closeTravelMapPage,
+      ),
     ];
 
     final receivedIndex = widget.index;
 
     if (receivedIndex != null &&
         receivedIndex >= 0 &&
-        receivedIndex <= 4) {
+        receivedIndex <= 5) {
       _selectedIndex = receivedIndex;
     } else {
       _selectedIndex = 0;
@@ -144,6 +150,23 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
     });
   }
 
+  void _openTravelMapPage() {
+    _closeQuickMenu();
+
+    setState(() {
+      if (_selectedIndex != 5) {
+        _travelMapPreviousIndex = _selectedIndex;
+      }
+
+      _selectedIndex = 5;
+    });
+  }
+
+  void _closeTravelMapPage() {
+    setState(() {
+      _selectedIndex = _travelMapPreviousIndex;
+    });
+  }
   void _showComingSoon(String featureName) {
     _closeQuickMenu();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -349,7 +372,9 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
   }) {
     final isSelected =
         _selectedIndex == index ||
-            (_selectedIndex == 4 && index == 2);
+            ((_selectedIndex == 4 ||
+                _selectedIndex == 5) &&
+                index == 2);
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
