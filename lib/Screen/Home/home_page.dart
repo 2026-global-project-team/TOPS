@@ -1,9 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:tops/Main/main_shell.dart';
 import 'continue_exploring_page.dart';
 import 'search_page.dart';
 import 'category_page.dart';
+import 'package:tops/Main/widgets/app_top_bar.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -75,7 +78,24 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeader(userName),
+              ArchiveTopBar(
+                userName: userName,
+                location: 'London',
+                profileImageUrl: null,
+                onProfilePressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const MainShell(
+                        index: 3,
+                      ),
+                    ),
+                  );
+                },
+                onLocationPressed: () {
+                  debugPrint('위치 선택');
+                },
+              ),
               const SizedBox(height: 14),
               _buildSearchBar(),
               const SizedBox(height: 14),
@@ -89,70 +109,6 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildHeader(String userName) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Good Morning,',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF8B8B8B),
-                  fontWeight: FontWeight.w300,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                userName,
-                style: const TextStyle(
-                  fontSize: 23,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 7),
-              const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.location_on_outlined,
-                    color: primaryColor,
-                    size: 16,
-                  ),
-                  SizedBox(width: 3),
-                  Text(
-                    'London',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  SizedBox(width: 2),
-                  Icon(
-                    Icons.keyboard_arrow_down,
-                    size: 16,
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const CircleAvatar(
-          radius: 22,
-          backgroundColor: Color(0xFFF0F1F6),
-          child: Icon(
-            Icons.person_outline,
-            color: Color(0xFF777777),
-            size: 23,
-          ),
-        ),
-      ],
     );
   }
 

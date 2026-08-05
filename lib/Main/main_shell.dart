@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:tops/Screen/Archive/create_archive_page.dart';
 import 'package:tops/Screen/My/profile_page.dart';
 import '../Screen/Explore/pages/explore_page.dart';
 import '../Screen/Home/home_page.dart';
 import '../Screen/Archive/archive_page.dart';
 
 class MainShell extends StatefulWidget {
-  const MainShell({super.key});
+  final int? index;
+
+  const MainShell({
+    super.key,
+    this.index,
+  });
 
   @override
   State<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<MainShell>
-    with SingleTickerProviderStateMixin {
+class _MainShellState extends State<MainShell> with SingleTickerProviderStateMixin {
   int _selectedIndex = 0; //화면 뭐부터 띄울지 1은 Explore 0은 Home
   bool _isQuickMenuOpen = false;
 
@@ -32,15 +37,24 @@ class _MainShellState extends State<MainShell>
   void initState() {
     super.initState();
 
+    final receivedIndex = widget.index;
+
+    if (receivedIndex != null &&
+        receivedIndex >= 0 &&
+        receivedIndex <= 4) {
+      _selectedIndex = receivedIndex;
+    } else {
+      _selectedIndex = 0;
+    }
+
     _menuController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 260),
     );
 
-    // 기본 X 형태 이미지 기준 45도(0.125턴) 회전하여 + 모양이 되는 애니메이션
     _rotationAnimation = Tween<double>(
       begin: 0,
-      end: 0.125,
+      end: 0.375,
     ).animate(
       CurvedAnimation(
         parent: _menuController,

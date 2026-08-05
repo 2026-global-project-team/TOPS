@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-
+import 'package:tops/Main/main_shell.dart';
+import 'create_archive_page.dart';
 import 'models/story.dart';
-import '../../Main/widgets/archive_top_bar.dart';
+import '../../Main/widgets/app_top_bar.dart';
 import 'widgets/story_card.dart';
 import 'widgets/trip_summary_card.dart';
 
@@ -86,7 +87,12 @@ class _ArchivePageState extends State<ArchivePage> {
                 location: 'London',
                 profileImageUrl: null,
                 onProfilePressed: () {
-                  debugPrint('프로필 설정 이동');
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const MainShell(index: 3),
+                    ),
+                  );
                 },
                 onLocationPressed: () {
                   debugPrint('지역 선택');
@@ -100,10 +106,23 @@ class _ArchivePageState extends State<ArchivePage> {
                 child: TripSummaryCard(
                   tripTitle: 'London Trip',
                   visitedPlacesCount: 12,
-                  onPlaceCountPressed: () {},
-                  onNewStoryPressed: _openNewStoryPage,
-                  onTravelMapPressed: () {},
-                  onWishPressed: () {},
+                  onPlaceCountPressed: () {
+                    debugPrint('Places 버튼 클릭');
+                  },
+                  onNewStoryPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const CreateArchivePage(),
+                      ),
+                    );
+                  },
+                  onTravelMapPressed: () {
+                    debugPrint('Travel Map');
+                  },
+                  onWishPressed: () {
+                    debugPrint('Wish');
+                  },
                 ),
               ),
             ),

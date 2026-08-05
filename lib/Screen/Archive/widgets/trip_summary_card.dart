@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 class TripSummaryCard extends StatelessWidget {
   final String tripTitle;
   final int visitedPlacesCount;
-
   final VoidCallback onPlaceCountPressed;
   final VoidCallback onNewStoryPressed;
   final VoidCallback onTravelMapPressed;
@@ -22,34 +21,22 @@ class TripSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(
-        horizontal: 16,
-      ),
-      padding: const EdgeInsets.fromLTRB(
-        12,
-        24,
-        12,
-        12,
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 5),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(26),
       ),
       child: Column(
         children: [
+          const SizedBox(height: 2),
+
           Text(
             tripTitle,
             style: const TextStyle(
               color: Color(0xFF333333),
               fontSize: 14,
-              fontWeight: FontWeight.w400,
+              fontWeight: FontWeight.w500,
             ),
           ),
 
@@ -58,8 +45,8 @@ class TripSummaryCard extends StatelessWidget {
           Text(
             '$visitedPlacesCount+ Places Visited',
             style: const TextStyle(
-              color: Color(0xFF292929),
-              fontSize: 24,
+              color: Color(0xFF2B2B2B),
+              fontSize: 22,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -74,8 +61,8 @@ class TripSummaryCard extends StatelessWidget {
                 vertical: 7,
               ),
               decoration: BoxDecoration(
-                color: const Color(0xFF2D3977),
-                borderRadius: BorderRadius.circular(18),
+                color: const Color(0xFF2E3D83),
+                borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -84,50 +71,50 @@ class TripSummaryCard extends StatelessWidget {
                     '$visitedPlacesCount Places',
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(width: 4),
                   const Icon(
-                    Icons.chevron_right,
+                    Icons.arrow_forward_ios,
                     color: Colors.white,
-                    size: 15,
+                    size: 11,
                   ),
                 ],
               ),
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
 
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 14,
+              horizontal: 10,
+              vertical: 16,
             ),
             decoration: BoxDecoration(
-              color: const Color(0xFFF2F3FF),
-              borderRadius: BorderRadius.circular(20),
+              color: const Color(0xFFF3F4FF),
+              borderRadius: BorderRadius.circular(22),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _TripMenuItem(
+                _ActionButton(
                   icon: Icons.edit_outlined,
                   label: 'New Story',
-                  onPressed: onNewStoryPressed,
+                  onTap: onNewStoryPressed,
                 ),
-                _TripMenuItem(
+                _ActionButton(
                   icon: Icons.route_outlined,
                   label: 'Travel Map',
-                  onPressed: onTravelMapPressed,
+                  onTap: onTravelMapPressed,
                 ),
-                _TripMenuItem(
+                _ActionButton(
                   icon: Icons.bookmark_border,
                   label: 'Wish',
-                  onPressed: onWishPressed,
+                  onTap: onWishPressed,
                 ),
               ],
             ),
@@ -138,51 +125,46 @@ class TripSummaryCard extends StatelessWidget {
   }
 }
 
-class _TripMenuItem extends StatelessWidget {
+class _ActionButton extends StatelessWidget {
   final IconData icon;
   final String label;
-  final VoidCallback onPressed;
+  final VoidCallback onTap;
 
-  const _TripMenuItem({
+  const _ActionButton({
     required this.icon,
     required this.label,
-    required this.onPressed,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onPressed,
-      borderRadius: BorderRadius.circular(40),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 6,
-          vertical: 4,
-        ),
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: 88,
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               width: 64,
               height: 64,
               decoration: const BoxDecoration(
-                color: Color(0xFF6480FF),
+                color: Color(0xFF6981FF),
                 shape: BoxShape.circle,
               ),
-              alignment: Alignment.center,
               child: Icon(
                 icon,
                 color: Colors.white,
-                size: 27,
+                size: 26,
               ),
             ),
-
             const SizedBox(height: 10),
-
             Text(
               label,
+              textAlign: TextAlign.center,
               style: const TextStyle(
-                color: Color(0xFF292929),
-                fontSize: 12,
+                color: Color(0xFF2D2D2D),
+                fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
             ),

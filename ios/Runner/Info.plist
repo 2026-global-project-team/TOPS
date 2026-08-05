@@ -5,7 +5,9 @@
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-    <string>카메라 사용을 위해 권한이 필요합니다.</string>
+    <string>스토리에 등록할 사진을 촬영하기 위해 카메라를 사용합니다.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>스토리에 등록할 사진을 선택하기 위해 사진 보관함을 사용합니다.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
