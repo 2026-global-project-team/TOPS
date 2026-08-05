@@ -8,9 +8,9 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
-  static const Color _primaryColor = Color(0xFF6883FF);
+  static const Color primaryColor = Color(0xFF6883FF);
 
-  final TextEditingController _searchController =
+  final TextEditingController _controller =
   TextEditingController();
 
   final List<String> _allPlaces = const [
@@ -20,10 +20,10 @@ class _SearchPageState extends State<SearchPage> {
     'WatchHouse Covent Garden',
     'Dear Coffee Lover',
     'Bloomsbury Coffee Co.',
-    'Kitchen Coffee',
     'Origin Coffee',
     'Hidden Gems',
     'Local Restaurants',
+    'Local Cafes',
   ];
 
   final List<String> _popularSearches = const [
@@ -41,40 +41,39 @@ class _SearchPageState extends State<SearchPage> {
 
   String _query = '';
 
-  List<String> get _filteredPlaces {
-    final trimmedQuery = _query.trim().toLowerCase();
+  List<String> get _results {
+    final query = _query.trim().toLowerCase();
 
-    if (trimmedQuery.isEmpty) {
+    if (query.isEmpty) {
       return [];
     }
 
-    return _allPlaces.where((place) {
-      return place.toLowerCase().contains(trimmedQuery);
-    }).toList();
+    return _allPlaces
+        .where(
+          (place) => place.toLowerCase().contains(query),
+    )
+        .toList();
   }
 
-  void _submitSearch(String value) {
-    final searchText = value.trim();
+  void _search(String text) {
+    final value = text.trim();
 
-    if (searchText.isEmpty) {
-      return;
-    }
+    if (value.isEmpty) return;
+
+    _controller.text = value;
+    _controller.selection = TextSelection.collapsed(
+      offset: value.length,
+    );
 
     setState(() {
-      _recentSearches.remove(searchText);
-      _recentSearches.insert(0, searchText);
-      _query = searchText;
-    });
-  }
-
-  void _removeRecentSearch(String searchText) {
-    setState(() {
-      _recentSearches.remove(searchText);
+      _query = value;
+      _recentSearches.remove(value);
+      _recentSearches.insert(0, value);
     });
   }
 
   Future<void> _clearRecentSearches() async {
-    final shouldClear = await showDialog<bool>(
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
@@ -83,7 +82,7 @@ class _SearchPageState extends State<SearchPage> {
             borderRadius: BorderRadius.circular(20),
           ),
           title: const Text(
-            'Clear all recent searches?',
+            'Clear recent searches?',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 18,
@@ -108,9 +107,9 @@ class _SearchPageState extends State<SearchPage> {
                 Navigator.pop(dialogContext, true);
               },
               child: const Text(
-                'OK',
+                'Clear',
                 style: TextStyle(
-                  color: _primaryColor,
+                  color: primaryColor,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -120,7 +119,7 @@ class _SearchPageState extends State<SearchPage> {
       },
     );
 
-    if (shouldClear == true) {
+    if (confirmed == true && mounted) {
       setState(() {
         _recentSearches.clear();
       });
@@ -129,24 +128,22 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   void dispose() {
-    _searchController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final searchResults = _filteredPlaces;
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
-            _buildSearchHeader(),
+            _buildHeader(),
             Expanded(
               child: _query.trim().isEmpty
-                  ? _buildDefaultSearchContent()
-                  : _buildSearchResults(searchResults),
+                  ? _buildInitialContent()
+                  : _buildResults(),
             ),
           ],
         ),
@@ -154,16 +151,14 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  Widget _buildSearchHeader() {
+  Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 20, 12),
+      padding: const EdgeInsets.fromLTRB(12, 12, 20, 12),
       child: Row(
         children: [
           GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTap: () {
-              Navigator.pop(context);
-            },
+            onTap: () => Navigator.pop(context),
             child: const Padding(
               padding: EdgeInsets.all(8),
               child: Icon(
@@ -193,7 +188,7 @@ class _SearchPageState extends State<SearchPage> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: TextField(
-                      controller: _searchController,
+                      controller: _controller,
                       autofocus: true,
                       textInputAction: TextInputAction.search,
                       onChanged: (value) {
@@ -201,7 +196,7 @@ class _SearchPageState extends State<SearchPage> {
                           _query = value;
                         });
                       },
-                      onSubmitted: _submitSearch,
+                      onSubmitted: _search,
                       decoration: const InputDecoration(
                         border: InputBorder.none,
                         hintText: 'Start your local journey...',
@@ -215,7 +210,7 @@ class _SearchPageState extends State<SearchPage> {
                   if (_query.isNotEmpty)
                     GestureDetector(
                       onTap: () {
-                        _searchController.clear();
+                        _controller.clear();
 
                         setState(() {
                           _query = '';
@@ -236,14 +231,9 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  Widget _buildDefaultSearchContent() {
+  Widget _buildInitialContent() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(
-        24,
-        8,
-        24,
-        40,
-      ),
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 40),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -275,48 +265,49 @@ class _SearchPageState extends State<SearchPage> {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: _recentSearches.map((searchText) {
-                return Container(
-                  padding: const EdgeInsets.fromLTRB(
-                    12,
-                    7,
-                    8,
-                    7,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF4F4F4),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          _searchController.text = searchText;
-                          _submitSearch(searchText);
-                        },
-                        child: Text(
-                          searchText,
-                          style: const TextStyle(
-                            fontSize: 12,
+              children: _recentSearches.map(
+                    (text) {
+                  return Container(
+                    padding: const EdgeInsets.fromLTRB(
+                      12,
+                      7,
+                      8,
+                      7,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF4F4F4),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GestureDetector(
+                          onTap: () => _search(text),
+                          child: Text(
+                            text,
+                            style: const TextStyle(
+                              fontSize: 12,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 5),
-                      GestureDetector(
-                        onTap: () {
-                          _removeRecentSearch(searchText);
-                        },
-                        child: const Icon(
-                          Icons.close,
-                          size: 14,
-                          color: Color(0xFF8B8B8B),
+                        const SizedBox(width: 5),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _recentSearches.remove(text);
+                            });
+                          },
+                          child: const Icon(
+                            Icons.close,
+                            size: 14,
+                            color: Color(0xFF8B8B8B),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
+                      ],
+                    ),
+                  );
+                },
+              ).toList(),
             ),
             const SizedBox(height: 30),
           ],
@@ -331,14 +322,11 @@ class _SearchPageState extends State<SearchPage> {
           ...List.generate(
             _popularSearches.length,
                 (index) {
-              final searchText = _popularSearches[index];
+              final text = _popularSearches[index];
 
               return GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  _searchController.text = searchText;
-                  _submitSearch(searchText);
-                },
+                onTap: () => _search(text),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
                     vertical: 13,
@@ -350,26 +338,23 @@ class _SearchPageState extends State<SearchPage> {
                         child: Text(
                           '${index + 1}',
                           style: const TextStyle(
-                            color: _primaryColor,
+                            color: primaryColor,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
                       Expanded(
                         child: Text(
-                          searchText,
+                          text,
                           style: const TextStyle(
                             fontSize: 14,
                           ),
                         ),
                       ),
-                      Icon(
-                        index.isEven
-                            ? Icons.arrow_drop_up
-                            : Icons.arrow_drop_down,
-                        color: index.isEven
-                            ? Colors.redAccent
-                            : _primaryColor,
+                      const Icon(
+                        Icons.chevron_right,
+                        color: Color(0xFF9B9BA3),
+                        size: 19,
                       ),
                     ],
                   ),
@@ -382,11 +367,13 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  Widget _buildSearchResults(List<String> searchResults) {
-    if (searchResults.isEmpty) {
+  Widget _buildResults() {
+    final results = _results;
+
+    if (results.isEmpty) {
       return const Center(
         child: Text(
-          '검색 결과가 없습니다.',
+          'No results found.',
           style: TextStyle(
             color: Color(0xFF8B8B8B),
           ),
@@ -395,13 +382,8 @@ class _SearchPageState extends State<SearchPage> {
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(
-        24,
-        12,
-        24,
-        40,
-      ),
-      itemCount: searchResults.length,
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
+      itemCount: results.length,
       separatorBuilder: (_, __) {
         return const Divider(
           height: 1,
@@ -409,16 +391,16 @@ class _SearchPageState extends State<SearchPage> {
         );
       },
       itemBuilder: (context, index) {
-        final placeName = searchResults[index];
+        final place = results[index];
 
         return GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: () {
-            _submitSearch(placeName);
+            _search(place);
 
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('$placeName 선택'),
+                content: Text('$place selected'),
               ),
             );
           },
@@ -447,7 +429,7 @@ class _SearchPageState extends State<SearchPage> {
                     CrossAxisAlignment.start,
                     children: [
                       Text(
-                        placeName,
+                        place,
                         style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
