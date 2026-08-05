@@ -1,6 +1,8 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tops/Main/main_shell.dart';
+import 'package:tops/Screen/Explore/pages/explore_page.dart';
 
 import 'package:tops/Screen/login/login.dart';
 
@@ -34,8 +36,9 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
+        fontFamily: 'Pretendard',
       ),
-      home: const LoginPage(),
+      home: const MainShell(),
     );
   }
 }
