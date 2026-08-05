@@ -28,6 +28,8 @@ class _CreateArchivePageState extends State<CreateArchivePage> {
 
   final TextEditingController _titleController = TextEditingController();
 
+  final TextEditingController _descriptionController = TextEditingController();
+
   final List<File> _selectedImages = [];
 
   String? _selectedLocation;
@@ -38,13 +40,14 @@ class _CreateArchivePageState extends State<CreateArchivePage> {
   @override
   void dispose() {
     _titleController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
   Future<void> _addPhoto() async {
     if (_selectedImages.length >= _maxImageCount) {
       _showMessage(
-        '사진은 최대 2장까지 추가할 수 있습니다.',
+        'You can add up to 2 photos.',
       );
       return;
     }
@@ -72,7 +75,7 @@ class _CreateArchivePageState extends State<CreateArchivePage> {
       if (!mounted) return;
 
       _showMessage(
-        '사진을 불러오지 못했습니다: '
+        'Unable to load the photo. '
             '${error.toString()}',
       );
     }
@@ -114,61 +117,34 @@ class _CreateArchivePageState extends State<CreateArchivePage> {
   }
 
   Future<void> _saveArchive() async {
-    final String title = _titleController.text.trim();
+    final String title =
+    _titleController.text.trim();
+
+    final String description =
+    _descriptionController.text.trim();
 
     if (_selectedImages.isEmpty) {
-      _showMessage('사진을 최소 1장 추가해 주세요.');
+      _showMessage(
+        'Please add at least one photo.',
+      );
       return;
     }
 
     if (title.isEmpty) {
-      _showMessage('제목을 입력해 주세요.');
+      _showMessage(
+        'Please enter a title.',
+      );
       return;
     }
 
-    if (_selectedLocation == null) {
-      _showMessage('위치를 선택해 주세요.');
+    if (description.isEmpty) {
+      _showMessage(
+        'Please share your experience.',
+      );
       return;
     }
 
-    if (_selectedDate == null) {
-      _showMessage('날짜를 선택해 주세요.');
-      return;
-    }
-
-    setState(() {
-      _isSaving = true;
-    });
-
-    try {
-      // 나중에 이 부분에서
-      // Supabase Story 저장 기능을 호출한다.
-      //
-      // 예:
-      //
-      // await StoryService().createStory(
-      //   title: title,
-      //   location: _selectedLocation!,
-      //   visitedAt: _selectedDate!,
-      //   images: _selectedImages,
-      // );
-
-      await Future<void>.delayed(const Duration(milliseconds: 500));
-
-      if (!mounted) return;
-
-      _showMessage('저장 기능은 나중에 Supabase와 연결합니다.');
-    } catch (error) {
-      if (!mounted) return;
-
-      _showMessage('저장에 실패했습니다: $error');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSaving = false;
-        });
-      }
-    }
+    // 이후 저장 처리
   }
 
   void _goBack() {
@@ -236,6 +212,10 @@ class _CreateArchivePageState extends State<CreateArchivePage> {
                 hasValue: _selectedDate != null,
                 onTap: _selectDate,
               ),
+
+              const SizedBox(height: 18),
+
+              _buildDescriptionField(),
             ],
           ),
         ),
@@ -318,6 +298,37 @@ class _CreateArchivePageState extends State<CreateArchivePage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDescriptionField() {
+    return TextField(
+      controller: _descriptionController,
+      keyboardType: TextInputType.multiline,
+      textInputAction: TextInputAction.newline,
+      minLines: 4,
+      maxLines: 7,
+      maxLength: 500,
+      style: const TextStyle(
+        color: Color(0xFF333333),
+        fontSize: 17,
+        height: 1.4,
+      ),
+      decoration: const InputDecoration(
+        hintText: 'Share your experience...',
+        hintStyle: TextStyle(
+          color: Color(0xFFA8AAB2),
+          fontSize: 18,
+          fontWeight: FontWeight.w400,
+        ),
+        counterText: '',
+        contentPadding: EdgeInsets.symmetric(
+          vertical: 10,
+        ),
+        border: InputBorder.none,
+        enabledBorder: InputBorder.none,
+        focusedBorder: InputBorder.none,
       ),
     );
   }

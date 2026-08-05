@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tops/Main/main_shell.dart';
-import 'package:tops/Screen/Explore/pages/explore_page.dart';
 import 'widgets/login_background.dart';
 import 'widgets/auth_text_field.dart';
 import 'widgets/Social_login_section.dart';
@@ -20,6 +19,8 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   StreamSubscription<AuthState>? _authSubscription;
+
+  bool _isNavigating = false;
 
   final TextEditingController _usernameController =
   TextEditingController();
@@ -38,17 +39,58 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  Future<void> _login() async {
-    final username = _usernameController.text.trim();
-    final password = _passwordController.text;
+  String _convertAuthError(String message) {
+    final String lowerMessage =
+    message.toLowerCase();
 
-    if (username.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            '아이디와 비밀번호를 입력해주세요.',
-          ),
+    if (lowerMessage.contains(
+      'invalid login credentials',
+    )) {
+      return 'Incorrect email or password.';
+    }
+
+    if (lowerMessage.contains(
+      'email not confirmed',
+    )) {
+      return 'Please verify your email before logging in.';
+    }
+
+    if (lowerMessage.contains(
+      'too many requests',
+    )) {
+      return 'Too many attempts. Please try again later.';
+    }
+
+    return message;
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
         ),
+      );
+  }
+
+  Future<void> _login() async {
+    final String email =
+    _usernameController.text.trim();
+
+    final String password =
+        _passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      _showMessage(
+        'Please enter your email and password.',
+      );
+      return;
+    }
+
+    if (!email.contains('@')) {
+      _showMessage(
+        'Please enter a valid email address.',
       );
       return;
     }
@@ -58,23 +100,38 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      // TODO: Supabase 이메일 로그인 연결
-      debugPrint('Username: $username');
+      final AuthResponse response =
+      await AuthService.signInWithEmail(
+        email: email,
+        password: password,
+      );
 
-      // await supabase.auth.signInWithPassword(
-      //   email: username,
-      //   password: password,
-      // );
-      await Future<void>.delayed(
-        const Duration(seconds: 1),
+      if (!mounted) return;
+
+      if (response.session == null) {
+        _showMessage(
+          'Unable to create a login session.',
+        );
+        return;
+      }
+
+      /*
+     * 화면 이동은 initState의
+     * onAuthStateChange listener가 처리한다.
+     */
+    } on AuthException catch (error) {
+      if (!mounted) return;
+
+      _showMessage(
+        _convertAuthError(error.message),
       );
     } catch (error) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('로그인 실패: $error'),
-        ),
+      debugPrint('Email login error: $error');
+
+      _showMessage(
+        'Login failed. Please try again.',
       );
     } finally {
       if (mounted) {
@@ -86,36 +143,55 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _signInWithApple() async {
-    // TODO: Supabase Apple 로그인 연결
-    debugPrint('Apple 로그인');
-    //await Supabase.instance.client.auth.signInWithOAuth(
-    //   OAuthProvider.apple,
-    // );
-  }
-
-  Future<void> _signInWithGoogle() async {
     try {
-      final launched =
-      await AuthService.signInWithGoogle();
+      final bool launched =
+      await AuthService.signInWithApple();
 
       if (!launched && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Google 로그인 화면을 열지 못했습니다.',
-            ),
-          ),
+        _showMessage(
+          'Unable to open the Apple login page.',
         );
       }
     } on AuthException catch (error) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Google 로그인 실패: ${error.message}',
-          ),
-        ),
+      _showMessage(
+        'Apple login failed: ${error.message}',
+      );
+    } catch (error) {
+      if (!mounted) return;
+
+      debugPrint('Apple login error: $error');
+
+      _showMessage(
+        'Apple login failed. Please try again.',
+      );
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    try {
+      final bool launched =
+      await AuthService.signInWithGoogle();
+
+      if (!launched && mounted) {
+        _showMessage(
+          'Unable to open the Google login page.',
+        );
+      }
+    } on AuthException catch (error) {
+      if (!mounted) return;
+
+      _showMessage(
+        'Google login failed: ${error.message}',
+      );
+    } catch (error) {
+      if (!mounted) return;
+
+      debugPrint('Google login error: $error');
+
+      _showMessage(
+        'Google login failed. Please try again.',
       );
     }
   }
@@ -139,23 +215,40 @@ class _LoginPageState extends State<LoginPage> {
     super.initState();
 
     _authSubscription =
-        Supabase.instance.client.auth.onAuthStateChange.listen(
-              (authState) {
-            final event = authState.event;
-            final session = authState.session;
+        Supabase.instance.client.auth
+            .onAuthStateChange
+            .listen(
+              (AuthState authState) {
+            final AuthChangeEvent event =
+                authState.event;
 
-            if (event == AuthChangeEvent.signedIn && session != null && mounted) {
-              // TODO: 로그인 완료 후 이동할 화면으로 변경
-              Navigator.pushReplacement(
+            final Session? session =
+                authState.session;
+
+            if (event ==
+                AuthChangeEvent.signedIn &&
+                session != null &&
+                mounted &&
+                !_isNavigating) {
+              _isNavigating = true;
+
+              Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => const MainShell(),
+                  builder: (_) =>
+                  const MainShell(),
                 ),
+                    (route) => false,
               );
             }
           },
-          onError: (error, stackTrace) {
-            debugPrint('인증 상태 감지 오류: $error');
+          onError: (
+              Object error,
+              StackTrace stackTrace,
+              ) {
+            debugPrint(
+              'Authentication listener error: $error',
+            );
           },
         );
   }

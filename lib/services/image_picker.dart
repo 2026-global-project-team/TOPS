@@ -71,7 +71,7 @@ class ArchiveImagePicker {
       return null;
     }
 
-    return _cropToThreeByFour(
+    return _cropToSquare(
       sourcePath: capturedImage.path,
     );
   }
@@ -96,7 +96,7 @@ class ArchiveImagePicker {
       }
 
       final File? croppedImage =
-      await _cropToThreeByFour(
+      await _cropToSquare(
         sourcePath: selectedImage.path,
       );
 
@@ -122,7 +122,7 @@ class ArchiveImagePicker {
       }
 
       final File? croppedImage =
-      await _cropToThreeByFour(
+      await _cropToSquare(
         sourcePath: image.path,
       );
 
@@ -134,7 +134,7 @@ class ArchiveImagePicker {
     return croppedImages;
   }
 
-  static Future<File?> _cropToThreeByFour({
+  static Future<File?> _cropToSquare({
     required String sourcePath,
   }) async {
     final CroppedFile? croppedFile =
@@ -143,8 +143,8 @@ class ArchiveImagePicker {
 
       // 세로형 3:4
       aspectRatio: const CropAspectRatio(
-        ratioX: 3,
-        ratioY: 4,
+        ratioX: 1,
+        ratioY: 1,
       ),
 
       compressFormat: ImageCompressFormat.jpg,
@@ -152,11 +152,11 @@ class ArchiveImagePicker {
 
       // 3:4 비율의 실제 출력 크기
       maxWidth: 1200,
-      maxHeight: 1600,
+      maxHeight: 1200,
 
       uiSettings: [
         AndroidUiSettings(
-          toolbarTitle: '사진 영역 선택',
+          toolbarTitle: 'Crop Photo',
           toolbarColor: Colors.black,
           toolbarWidgetColor: Colors.white,
           backgroundColor: Colors.black,
@@ -171,12 +171,12 @@ class ArchiveImagePicker {
           CropAspectRatioPreset.original,
         ),
         IOSUiSettings(
-          title: '사진 영역 선택',
+          title: 'Crop Photo',
           aspectRatioLockEnabled: true,
           resetAspectRatioEnabled: false,
           rotateButtonsHidden: false,
-          doneButtonTitle: '완료',
-          cancelButtonTitle: '취소',
+          doneButtonTitle: 'Done',
+          cancelButtonTitle: 'Cancel',
         ),
       ],
     );
