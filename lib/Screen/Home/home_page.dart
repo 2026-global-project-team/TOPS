@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-
+import 'continue_exploring_page.dart';
 import 'search_page.dart';
-
+import 'category_page.dart';
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -263,19 +263,51 @@ class _HomePageState extends State<HomePage> {
 
         const SizedBox(height: 22),
 
-        _buildSectionHeader('Archive'),
+        _buildSectionHeader(
+          'Archive',
+          onTap: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Archive 화면은 준비 중입니다.'),
+              ),
+            );
+          },
+        ),
         const SizedBox(height: 12),
         _buildArchivePlaceholders(),
 
         const SizedBox(height: 24),
 
-        _buildSectionHeader('Trending'),
+        _buildSectionHeader(
+          'Trending',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const CategoryPage(
+                  category: 'Trending',
+                ),
+              ),
+            );
+          },
+        ),
         const SizedBox(height: 12),
         _buildTrendingPlaceholders(),
 
         const SizedBox(height: 24),
 
-        _buildSectionHeader('Continue Exploring'),
+        _buildSectionHeader(
+          'Continue Exploring',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                const ContinueExploringPage(),
+              ),
+            );
+          },
+        ),
         const SizedBox(height: 12),
         _buildContinuePlaceholders(),
       ],
@@ -383,7 +415,10 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(
+      String title, {
+        VoidCallback? onTap,
+      }) {
     return Row(
       children: [
         Expanded(
@@ -395,18 +430,32 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ),
-        const Text(
-          'More',
-          style: TextStyle(
-            fontSize: 12,
-            color: Color(0xFF8B8B8B),
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          child: const Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: 4,
+              vertical: 8,
+            ),
+            child: Row(
+              children: [
+                Text(
+                  'More',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF8B8B8B),
+                  ),
+                ),
+                SizedBox(width: 2),
+                Icon(
+                  Icons.chevron_right,
+                  size: 17,
+                  color: Color(0xFF8B8B8B),
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(width: 2),
-        const Icon(
-          Icons.chevron_right,
-          size: 17,
-          color: Color(0xFF8B8B8B),
         ),
       ],
     );
