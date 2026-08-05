@@ -1,9 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tops/Main/widgets/app_top_bar.dart';
+import 'category_page.dart';
 import 'continue_exploring_page.dart';
 import 'search_page.dart';
-import 'category_page.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -20,6 +23,10 @@ class _HomePageState extends State<HomePage> {
   int _selectedCategoryIndex = 0;
   int _currentBannerIndex = 0;
 
+  bool _isPlacesLoading = true;
+  String? _placesError;
+  List<Map<String, dynamic>> _places = [];
+
   final List<String> _categories = const [
     'Home',
     'Cafe',
@@ -30,6 +37,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    _loadPlaces();
 
     _bannerTimer = Timer.periodic(
       const Duration(seconds: 3),
@@ -45,6 +53,37 @@ class _HomePageState extends State<HomePage> {
         );
       },
     );
+  }
+
+  Future<void> _loadPlaces() async {
+    try {
+      final data = await Supabase.instance.client
+          .from('places')
+          .select(
+        'id, name, category, description, address, city, '
+            'latitude, longitude, image_url',
+      )
+          .order('id')
+          .limit(70);
+
+      if (!mounted) return;
+
+      setState(() {
+        _places = List<Map<String, dynamic>>.from(data);
+        _isPlacesLoading = false;
+        _placesError = null;
+      });
+    } catch (error) {
+      debugPrint('장소 조회 오류: $error');
+
+      if (!mounted) return;
+
+      setState(() {
+        _places = [];
+        _isPlacesLoading = false;
+        _placesError = error.toString();
+      });
+    }
   }
 
   @override
@@ -63,6 +102,16 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  List<Map<String, dynamic>> _placesByCategory(String category) {
+    return _places.where((place) {
+      return place['category']
+          ?.toString()
+          .trim()
+          .toLowerCase() ==
+          category.trim().toLowerCase();
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     const userName = 'Traveler';
@@ -70,89 +119,44 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 160),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(userName),
-              const SizedBox(height: 14),
-              _buildSearchBar(),
-              const SizedBox(height: 14),
-              _buildCategoryTabs(),
-              const SizedBox(height: 12),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 220),
-                child: _buildSelectedContent(),
-              ),
-            ],
+        child: RefreshIndicator(
+          onRefresh: _loadPlaces,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(
+              20,
+              12,
+              20,
+              160,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ArchiveTopBar(
+                  userName: userName,
+                  location: 'London',
+                  profileImageUrl: null,
+                  onProfilePressed: () {
+                    // TODO: 프로필 화면 이동
+                  },
+                  onLocationPressed: () {
+                    // TODO: 위치 선택
+                  },
+                ),
+                const SizedBox(height: 14),
+                _buildSearchBar(),
+                const SizedBox(height: 14),
+                _buildCategoryTabs(),
+                const SizedBox(height: 12),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  child: _buildSelectedContent(),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildHeader(String userName) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Good Morning,',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF8B8B8B),
-                  fontWeight: FontWeight.w300,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                userName,
-                style: const TextStyle(
-                  fontSize: 23,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 7),
-              const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.location_on_outlined,
-                    color: primaryColor,
-                    size: 16,
-                  ),
-                  SizedBox(width: 3),
-                  Text(
-                    'London',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  SizedBox(width: 2),
-                  Icon(
-                    Icons.keyboard_arrow_down,
-                    size: 16,
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const CircleAvatar(
-          radius: 22,
-          backgroundColor: Color(0xFFF0F1F6),
-          child: Icon(
-            Icons.person_outline,
-            color: Color(0xFF777777),
-            size: 23,
-          ),
-        ),
-      ],
     );
   }
 
@@ -245,6 +249,41 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildSelectedContent() {
+    if (_isPlacesLoading) {
+      return const SizedBox(
+        key: ValueKey('loading'),
+        height: 280,
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_placesError != null) {
+      return SizedBox(
+        key: const ValueKey('error'),
+        height: 280,
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                '장소 데이터를 불러오지 못했습니다.',
+                style: TextStyle(
+                  color: Color(0xFF777777),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextButton(
+                onPressed: _loadPlaces,
+                child: const Text('다시 시도'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     if (_selectedCategoryIndex == 0) {
       return _buildHomeContent();
     }
@@ -255,14 +294,16 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildHomeContent() {
+    final archivePlaces = _places.take(3).toList();
+    final trendingPlaces = _places.skip(3).take(6).toList();
+    final continuePlaces = _places.skip(9).take(8).toList();
+
     return Column(
       key: const ValueKey('home'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildBanner(),
-
         const SizedBox(height: 22),
-
         _buildSectionHeader(
           'Archive',
           onTap: () {
@@ -274,10 +315,8 @@ class _HomePageState extends State<HomePage> {
           },
         ),
         const SizedBox(height: 12),
-        _buildArchivePlaceholders(),
-
+        _buildArchivePlaces(archivePlaces),
         const SizedBox(height: 24),
-
         _buildSectionHeader(
           'Trending',
           onTap: () {
@@ -292,10 +331,12 @@ class _HomePageState extends State<HomePage> {
           },
         ),
         const SizedBox(height: 12),
-        _buildTrendingPlaceholders(),
-
+        _buildHorizontalPlaces(
+          places: trendingPlaces,
+          cardWidth: 145,
+          imageHeight: 112,
+        ),
         const SizedBox(height: 24),
-
         _buildSectionHeader(
           'Continue Exploring',
           onTap: () {
@@ -309,7 +350,11 @@ class _HomePageState extends State<HomePage> {
           },
         ),
         const SizedBox(height: 12),
-        _buildContinuePlaceholders(),
+        _buildHorizontalPlaces(
+          places: continuePlaces,
+          cardWidth: 126,
+          imageHeight: 105,
+        ),
       ],
     );
   }
@@ -329,7 +374,8 @@ class _HomePageState extends State<HomePage> {
             children: [
               _buildBannerItem(
                 title: 'TOPS PICKS',
-                subtitle: 'Discover meaningful local places',
+                subtitle:
+                'Discover meaningful local places',
                 colors: const [
                   Color(0xFF33384D),
                   Color(0xFF7484D2),
@@ -337,7 +383,8 @@ class _HomePageState extends State<HomePage> {
               ),
               _buildBannerItem(
                 title: 'TRAVEL WITH PURPOSE',
-                subtitle: 'Support independent shops in London',
+                subtitle:
+                'Support independent shops in London',
                 colors: const [
                   Color(0xFF746247),
                   Color(0xFFB9A773),
@@ -352,13 +399,16 @@ class _HomePageState extends State<HomePage> {
           children: List.generate(
             2,
                 (index) {
-              final selected = index == _currentBannerIndex;
+              final selected =
+                  index == _currentBannerIndex;
 
               return AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
                 width: selected ? 13 : 5,
                 height: 5,
-                margin: const EdgeInsets.symmetric(horizontal: 3),
+                margin: const EdgeInsets.symmetric(
+                  horizontal: 3,
+                ),
                 decoration: BoxDecoration(
                   color: selected
                       ? primaryColor
@@ -461,45 +511,45 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildArchivePlaceholders() {
+  Widget _buildArchivePlaces(
+      List<Map<String, dynamic>> places,
+      ) {
+    if (places.isEmpty) {
+      return _buildEmptyPlaceBox(height: 205);
+    }
+
     return SizedBox(
       height: 205,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: 3,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemCount: places.length,
+        separatorBuilder: (_, __) =>
+        const SizedBox(width: 12),
         itemBuilder: (context, index) {
+          final place = places[index];
+          final name =
+              place['name']?.toString() ?? 'Local Place';
+          final imageUrl =
+          place['image_url']?.toString();
+
           return Container(
             width: 170,
             decoration: BoxDecoration(
-              color: const Color(0xFFE7E8ED),
               borderRadius: BorderRadius.circular(18),
             ),
             child: Stack(
+              fit: StackFit.expand,
               children: [
-                const Center(
-                  child: Icon(
-                    Icons.image_outlined,
-                    size: 42,
-                    color: Color(0xFFA1A3AB),
-                  ),
+                _buildNetworkPlaceImage(
+                  imageUrl: imageUrl,
+                  width: 170,
+                  height: 205,
+                  borderRadius: 18,
                 ),
                 Positioned(
                   top: 10,
                   right: 10,
-                  child: Container(
-                    width: 29,
-                    height: 29,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.favorite_border,
-                      color: primaryColor,
-                      size: 17,
-                    ),
-                  ),
+                  child: _buildFavoriteButton(),
                 ),
                 Positioned(
                   left: 10,
@@ -507,14 +557,19 @@ class _HomePageState extends State<HomePage> {
                   bottom: 10,
                   child: Container(
                     height: 44,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius:
+                      BorderRadius.circular(14),
                     ),
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'Archive ${index + 1}',
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
@@ -530,66 +585,62 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildTrendingPlaceholders() {
+  Widget _buildHorizontalPlaces({
+    required List<Map<String, dynamic>> places,
+    required double cardWidth,
+    required double imageHeight,
+  }) {
+    if (places.isEmpty) {
+      return _buildEmptyPlaceBox(
+        height: imageHeight + 55,
+      );
+    }
+
     return SizedBox(
-      height: 170,
+      height: imageHeight + 55,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: 3,
-        separatorBuilder: (_, __) {
-          return const SizedBox(width: 12);
-        },
+        itemCount: places.length,
+        separatorBuilder: (_, __) =>
+        const SizedBox(width: 12),
         itemBuilder: (context, index) {
+          final place = places[index];
+
+          final name =
+              place['name']?.toString() ?? 'Local Place';
+          final category =
+              place['category']?.toString() ?? '';
+          final city =
+              place['city']?.toString() ?? 'London';
+          final imageUrl =
+          place['image_url']?.toString();
+
           return SizedBox(
-            width: 145,
+            width: cardWidth,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Stack(
                   children: [
-                    Container(
-                      width: 145,
-                      height: 112,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE7E8ED),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: const Icon(
-                        Icons.image_outlined,
-                        color: Color(0xFFA1A3AB),
-                      ),
+                    _buildNetworkPlaceImage(
+                      imageUrl: imageUrl,
+                      width: cardWidth,
+                      height: imageHeight,
+                      borderRadius: 14,
                     ),
                     Positioned(
                       top: 8,
                       right: 8,
-                      child: Container(
-                        width: 28,
-                        height: 28,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.favorite_border,
-                          color: primaryColor,
-                          size: 17,
-                        ),
-                      ),
+                      child: _buildFavoriteButton(),
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 7),
-
                 Row(
                   children: [
                     Expanded(
                       child: Text(
-                        index == 0
-                            ? 'The Kiln Rooms'
-                            : index == 1
-                            ? 'Padella'
-                            : 'Manteca',
+                        name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -598,116 +649,47 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF0F2FF),
-                        borderRadius: BorderRadius.circular(9),
-                      ),
-                      child: const Text(
-                        'Culture',
-                        style: TextStyle(
-                          fontSize: 7,
-                          color: primaryColor,
+                    if (category.isNotEmpty) ...[
+                      const SizedBox(width: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0F2FF),
+                          borderRadius:
+                          BorderRadius.circular(9),
+                        ),
+                        child: Text(
+                          category,
+                          style: const TextStyle(
+                            fontSize: 7,
+                            color: primaryColor,
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
-
                 const SizedBox(height: 4),
-
-                const Row(
+                Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.location_on_outlined,
                       size: 10,
                       color: Color(0xFF8B8B8B),
                     ),
-                    SizedBox(width: 2),
-                    Text(
-                      'London, UK',
-                      style: TextStyle(
-                        fontSize: 8,
-                        color: Color(0xFF8B8B8B),
-                      ),
-                    ),
-                    SizedBox(width: 5),
-                    Icon(
-                      Icons.star,
-                      size: 10,
-                      color: Colors.amber,
-                    ),
-                    SizedBox(width: 2),
-                    Text(
-                      '4.6',
-                      style: TextStyle(
-                        fontSize: 8,
-                        color: Color(0xFF8B8B8B),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildContinuePlaceholders() {
-    return SizedBox(
-      height: 165,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: 4,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
-        itemBuilder: (context, index) {
-          return SizedBox(
-            width: 126,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 126,
-                  height: 105,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE7E8ED),
-                    borderRadius: BorderRadius.circular(13),
-                  ),
-                  child: const Icon(
-                    Icons.image_outlined,
-                    color: Color(0xFFA1A3AB),
-                  ),
-                ),
-                const SizedBox(height: 7),
-                Text(
-                  'Local Place ${index + 1}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                const Row(
-                  children: [
-                    Icon(
-                      Icons.location_on_outlined,
-                      size: 10,
-                      color: Color(0xFF8B8B8B),
-                    ),
-                    SizedBox(width: 2),
-                    Text(
-                      'London, UK',
-                      style: TextStyle(
-                        fontSize: 8,
-                        color: Color(0xFF8B8B8B),
+                    const SizedBox(width: 2),
+                    Expanded(
+                      child: Text(
+                        '$city, UK',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 8,
+                          color: Color(0xFF8B8B8B),
+                        ),
                       ),
                     ),
                   ],
@@ -721,18 +703,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildCategoryContent(String category) {
-    final IconData icon;
-
-    switch (category) {
-      case 'Cafe':
-        icon = Icons.local_cafe_outlined;
-        break;
-      case 'Restaurant':
-        icon = Icons.restaurant_outlined;
-        break;
-      default:
-        icon = Icons.palette_outlined;
-    }
+    final categoryPlaces = _placesByCategory(category);
 
     return Column(
       key: ValueKey(category),
@@ -754,7 +725,7 @@ class _HomePageState extends State<HomePage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                icon,
+                _categoryIcon(category),
                 color: Colors.white,
                 size: 34,
               ),
@@ -771,29 +742,36 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         const SizedBox(height: 20),
-        const Text(
-          'Trending This Week',
-          style: TextStyle(
+        Text(
+          '$category Places',
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: 12),
-        ...List.generate(
-          4,
-              (index) => _buildTrendingCard(
-            category: category,
-            index: index,
+        if (categoryPlaces.isEmpty)
+          _buildEmptyPlaceBox(height: 150)
+        else
+          ...categoryPlaces.take(10).map(
+            _buildCategoryPlaceCard,
           ),
-        ),
       ],
     );
   }
 
-  Widget _buildTrendingCard({
-    required String category,
-    required int index,
-  }) {
+  Widget _buildCategoryPlaceCard(
+      Map<String, dynamic> place,
+      ) {
+    final name =
+        place['name']?.toString() ?? 'Local Place';
+    final description =
+        place['description']?.toString() ?? '';
+    final city =
+        place['city']?.toString() ?? 'London';
+    final imageUrl =
+    place['image_url']?.toString();
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(10),
@@ -806,17 +784,11 @@ class _HomePageState extends State<HomePage> {
       ),
       child: Row(
         children: [
-          Container(
+          _buildNetworkPlaceImage(
+            imageUrl: imageUrl,
             width: 88,
             height: 80,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE7E8ED),
-              borderRadius: BorderRadius.circular(11),
-            ),
-            child: const Icon(
-              Icons.image_outlined,
-              color: Color(0xFFA1A3AB),
-            ),
+            borderRadius: 11,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -824,7 +796,9 @@ class _HomePageState extends State<HomePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$category Place ${index + 1}',
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -832,7 +806,9 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  'Discover a local ${category.toLowerCase()} in London.',
+                  description.isEmpty
+                      ? 'Discover a meaningful local place in London.'
+                      : description,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -841,19 +817,23 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Row(
+                Row(
                   children: [
-                    Icon(
-                      Icons.star,
-                      size: 13,
-                      color: Colors.amber,
+                    const Icon(
+                      Icons.location_on_outlined,
+                      size: 12,
+                      color: Color(0xFF8B8B8B),
                     ),
-                    SizedBox(width: 3),
-                    Text(
-                      '4.6',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Color(0xFF8B8B8B),
+                    const SizedBox(width: 3),
+                    Expanded(
+                      child: Text(
+                        '$city, UK',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Color(0xFF8B8B8B),
+                        ),
                       ),
                     ),
                   ],
@@ -861,6 +841,7 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
           ),
+          const SizedBox(width: 6),
           const Icon(
             Icons.favorite_border,
             color: primaryColor,
@@ -869,5 +850,99 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
     );
+  }
+
+  Widget _buildNetworkPlaceImage({
+    required String? imageUrl,
+    required double width,
+    required double height,
+    required double borderRadius,
+  }) {
+    final hasImage =
+        imageUrl != null && imageUrl.trim().isNotEmpty;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(borderRadius),
+      child: hasImage
+          ? Image.network(
+        imageUrl,
+        width: width,
+        height: height,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) {
+          return _buildImageFallback(
+            width: width,
+            height: height,
+          );
+        },
+      )
+          : _buildImageFallback(
+        width: width,
+        height: height,
+      ),
+    );
+  }
+
+  Widget _buildImageFallback({
+    required double width,
+    required double height,
+  }) {
+    return Container(
+      width: width,
+      height: height,
+      color: const Color(0xFFE7E8ED),
+      alignment: Alignment.center,
+      child: const Icon(
+        Icons.image_outlined,
+        color: Color(0xFFA1A3AB),
+      ),
+    );
+  }
+
+  Widget _buildFavoriteButton() {
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+      ),
+      child: const Icon(
+        Icons.favorite_border,
+        color: primaryColor,
+        size: 17,
+      ),
+    );
+  }
+
+  Widget _buildEmptyPlaceBox({
+    required double height,
+  }) {
+    return Container(
+      width: double.infinity,
+      height: height,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF4F4F4),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: const Text(
+        '등록된 장소가 없습니다.',
+        style: TextStyle(
+          color: Color(0xFF8B8B8B),
+        ),
+      ),
+    );
+  }
+
+  IconData _categoryIcon(String category) {
+    switch (category) {
+      case 'Cafe':
+        return Icons.local_cafe_outlined;
+      case 'Restaurant':
+        return Icons.restaurant_outlined;
+      default:
+        return Icons.palette_outlined;
+    }
   }
 }

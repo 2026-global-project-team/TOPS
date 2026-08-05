@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:tops/Main/widgets/polaroidCard.dart';
 
 class SignupCompleteStep extends StatelessWidget {
   final VoidCallback onStartExploring;
@@ -66,22 +67,26 @@ class SignupCompleteStep extends StatelessWidget {
                     offset: const Offset(45, 0),
                     child: Transform.rotate(
                       angle: 0.28,
-                      child: _PolaroidCard(
-                        imagePath:
-                        'assets/images/welcome_back.png',
+                      child: PolaroidCard(
                         width: screenSize.width * 0.55,
                         height: screenSize.height * 0.30,
+                        image: Image.asset(
+                          'assets/images/welcome_back.png',
+                          fit: BoxFit.cover,
+                        )
                       ),
                     ),
                 ),
 
                 Transform.rotate(
                   angle: 0,
-                  child: _PolaroidCard(
-                    imagePath:
-                    'assets/images/welcome_front.png',
+                  child: PolaroidCard(
                     width: screenSize.width * 0.55,
                     height: screenSize.height * 0.30,
+                    image: Image.asset(
+                      'assets/images/welcome_front.png',
+                      fit: BoxFit.cover,
+                    )
                   ),
                 ),
               ],
@@ -115,46 +120,6 @@ class SignupCompleteStep extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _PolaroidCard extends StatelessWidget {
-  final String imagePath;
-  final double width;
-  final double height;
-
-  const _PolaroidCard({
-    required this.imagePath,
-    required this.width,
-    required this.height,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      padding: const EdgeInsets.fromLTRB(
-        14,
-        14,
-        14,
-        62,
-      ),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7F4FF),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
-            blurRadius: 12,
-            offset: const Offset(0, 7),
-          ),
-        ],
-      ),
-      child: Image.asset(
-        imagePath,
-        fit: BoxFit.cover,
       ),
     );
   }
