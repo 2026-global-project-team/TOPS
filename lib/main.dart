@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tops/Main/main_shell.dart';
 import 'package:tops/Screen/Archive/archive_page.dart';
 import 'package:tops/Screen/Explore/pages/explore_page.dart';
-
+import 'Screen/splash_page.dart';
 import 'package:tops/Screen/login/login.dart';
 
 late List<CameraDescription> cameras;
@@ -39,7 +39,36 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         fontFamily: 'Pretendard',
       ),
-      home: const LoginPage(),
+      home: const AppStartPage(),
     );
+  }
+}
+class AppStartPage extends StatefulWidget {
+  const AppStartPage({super.key});
+
+  @override
+  State<AppStartPage> createState() => _AppStartPageState();
+}
+
+class _AppStartPageState extends State<AppStartPage> {
+  bool _showSplash = true;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_showSplash) {
+      return SplashPage(
+        onFinished: () {
+          setState(() {
+            _showSplash = false;
+          });
+        },
+      );
+    }
+
+    // 스플래시 종료 후 처음 보여줄 화면
+    return const LoginPage();
+
+    // 로그인 화면 없이 바로 메인 화면으로 가려면 위 코드를 지우고:
+    // return const MainShell();
   }
 }

@@ -28,6 +28,10 @@ class _HomePageState extends State<HomePage> {
   String? _placesError;
   List<Map<String, dynamic>> _places = [];
 
+  final List<String> _bannerImages = const [
+    'assets/images/banner.png',
+    'assets/images/banner2.png',
+  ];
   String _userName = 'TOPS Traveler';
   String _location = 'London';
   String? _profileImageUrl;
@@ -49,11 +53,14 @@ class _HomePageState extends State<HomePage> {
           (_) {
         if (!_bannerController.hasClients) return;
 
-        final nextIndex = (_currentBannerIndex + 1) % 2;
+        final currentPage =
+            _bannerController.page?.round() ?? 5000;
 
         _bannerController.animateToPage(
-          nextIndex,
-          duration: const Duration(milliseconds: 400),
+          currentPage + 1,
+          duration: const Duration(
+            milliseconds: 400,
+          ),
           curve: Curves.easeInOut,
         );
       },
@@ -262,11 +269,19 @@ class _HomePageState extends State<HomePage> {
                 _buildSearchBar(),
                 const SizedBox(height: 14),
                 _buildCategoryTabs(),
+
                 const SizedBox(height: 12),
+
+// Home / Cafe / Restaurant / Culture 모든 탭에 항상 표시
+                _buildBanner(),
+
+                const SizedBox(height: 22),
+
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 220),
                   child: _buildSelectedContent(),
                 ),
+
               ],
             ),
           ),
@@ -417,8 +432,6 @@ class _HomePageState extends State<HomePage> {
       key: const ValueKey('home'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildBanner(),
-        const SizedBox(height: 22),
         _buildSectionHeader(
           'Archive',
           onTap: () {
@@ -431,7 +444,9 @@ class _HomePageState extends State<HomePage> {
         ),
         const SizedBox(height: 12),
         _buildArchivePlaces(archivePlaces),
+
         const SizedBox(height: 24),
+
         _buildSectionHeader(
           'Trending',
           onTap: () {
@@ -445,13 +460,17 @@ class _HomePageState extends State<HomePage> {
             );
           },
         ),
+
         const SizedBox(height: 12),
+
         _buildHorizontalPlaces(
           places: trendingPlaces,
           cardWidth: 145,
           imageHeight: 112,
         ),
+
         const SizedBox(height: 24),
+
         _buildSectionHeader(
           'Continue Exploring',
           onTap: () {
@@ -464,7 +483,9 @@ class _HomePageState extends State<HomePage> {
             );
           },
         ),
+
         const SizedBox(height: 12),
+
         _buildHorizontalPlaces(
           places: continuePlaces,
           cardWidth: 126,
@@ -479,46 +500,44 @@ class _HomePageState extends State<HomePage> {
       children: [
         SizedBox(
           height: 158,
-          child: PageView(
+          child: PageView.builder(
             controller: _bannerController,
+
+            // 아주 큰 숫자를 줘서 계속 오른쪽으로 넘길 수 있게 함
+            itemCount: 10000,
+
             onPageChanged: (index) {
               setState(() {
-                _currentBannerIndex = index;
+                _currentBannerIndex =
+                    index % _bannerImages.length;
               });
             },
-            children: [
-              _buildBannerItem(
-                title: 'TOPS PICKS',
-                subtitle:
-                'Discover meaningful local places',
-                colors: const [
-                  Color(0xFF33384D),
-                  Color(0xFF7484D2),
-                ],
-              ),
-              _buildBannerItem(
-                title: 'TRAVEL WITH PURPOSE',
-                subtitle:
-                'Support independent shops in London',
-                colors: const [
-                  Color(0xFF746247),
-                  Color(0xFFB9A773),
-                ],
-              ),
-            ],
+
+            itemBuilder: (context, index) {
+              final imageIndex =
+                  index % _bannerImages.length;
+
+              return _buildBannerItem(
+                image: _bannerImages[imageIndex],
+              );
+            },
           ),
         ),
+
         const SizedBox(height: 8),
+
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(
-            2,
+            _bannerImages.length,
                 (index) {
               final selected =
                   index == _currentBannerIndex;
 
               return AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
+                duration: const Duration(
+                  milliseconds: 180,
+                ),
                 width: selected ? 13 : 5,
                 height: 5,
                 margin: const EdgeInsets.symmetric(
@@ -528,7 +547,8 @@ class _HomePageState extends State<HomePage> {
                   color: selected
                       ? primaryColor
                       : const Color(0xFFD7D7D7),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius:
+                  BorderRadius.circular(10),
                 ),
               );
             },
@@ -539,47 +559,27 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildBannerItem({
-    required String title,
-    required String subtitle,
-    required List<Color> colors,
+    required String image,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: colors,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      padding: const EdgeInsets.all(22),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: Image.asset(
+        image,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: Colors.grey.shade300,
+            alignment: Alignment.center,
+            child: const Icon(
+              Icons.broken_image_outlined,
+              color: Colors.grey,
+              size: 40,
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            subtitle,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 12,
-            ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
-
   Widget _buildSectionHeader(
       String title, {
         VoidCallback? onTap,
@@ -824,38 +824,7 @@ class _HomePageState extends State<HomePage> {
       key: ValueKey(category),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          height: 140,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [
-                Color(0xFF6883FF),
-                Color(0xFFA6B3F5),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                _categoryIcon(category),
-                color: Colors.white,
-                size: 34,
-              ),
-              const SizedBox(height: 9),
-              Text(
-                'Discover local $category',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ),
+
         const SizedBox(height: 20),
         Text(
           '$category Places',
