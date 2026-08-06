@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../Main/widgets/app_top_bar.dart';
 import '../../services/profile_service.dart';
+import '../../services/story_service.dart';
 
 import 'create_archive_page.dart';
 import 'models/story.dart';
@@ -32,35 +33,17 @@ class _ArchivePageState extends State<ArchivePage> {
 
   bool _isProfileLoading = true;
 
-  final List<Story> _stories = [
-    Story(
-      id: '2',
-      title: 'Good dinner',
-      location: 'Camden, London, UK',
-      visitedAt: DateTime(2026, 10, 20),
-      imageUrls: const [
-        'assets/images/story_dinner.png',
-        'assets/images/story_dinner_2.png',
-      ],
-    ),
-    Story(
-      id: '1',
-      title: 'Picnic day',
-      location: 'Hyde Park, London, UK',
-      visitedAt: DateTime(2026, 10, 18),
-      imageUrls: const [
-        'assets/images/story_picnic.png',
-        'assets/images/story_picnic_2.png',
-      ],
-    ),
-  ];
+  List<Story> _stories = [];
+
+  bool _isStoriesLoading = true;
+  String? _storiesError;
 
   @override
   void initState() {
     super.initState();
 
-    _sortStories();
     _loadProfile();
+    _loadStories();
   }
 
   Future<void> _loadProfile() async {
@@ -104,13 +87,51 @@ class _ArchivePageState extends State<ArchivePage> {
     }
   }
 
-  Future<void> _refreshArchive() async {
-    await _loadProfile();
+  Future<void> _loadStories() async {
+    setState(() {
+      _isStoriesLoading = true;
+      _storiesError = null;
+    });
 
-    /*
-     * 나중에 stories를 Supabase에서 조회하게 되면
-     * 이곳에서 story 조회 함수도 함께 호출하면 된다.
-     */
+    try {
+      final List<Story> stories =
+      await StoryService
+          .getCurrentUserStories();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _stories = stories;
+        _isStoriesLoading = false;
+      });
+    } catch (error, stackTrace) {
+      debugPrint(
+        'Archive stories loading error: $error',
+      );
+
+      debugPrintStack(
+        stackTrace: stackTrace,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _stories = [];
+        _isStoriesLoading = false;
+        _storiesError = error.toString();
+      });
+    }
+  }
+
+  Future<void> _refreshArchive() async {
+    await Future.wait([
+      _loadProfile(),
+      _loadStories(),
+    ]);
   }
 
   void _sortStories() {
@@ -123,7 +144,7 @@ class _ArchivePageState extends State<ArchivePage> {
     );
   }
 
-  void _toggleWish(String storyId) {
+  void _toggleWish(int storyId) {
     final int index = _stories.indexWhere(
           (Story story) {
         return story.id == storyId;
@@ -189,15 +210,19 @@ class _ArchivePageState extends State<ArchivePage> {
                         'Places button pressed',
                       );
                     },
-                    onNewStoryPressed: () {
-                      Navigator.push(
+                    onNewStoryPressed: () async {
+                      final bool? created =
+                      await Navigator.push<bool>(
                         context,
                         MaterialPageRoute(
-                          builder: (_) {
-                            return const CreateArchivePage();
-                          },
+                          builder: (_) =>
+                          const CreateArchivePage(),
                         ),
                       );
+
+                      if (created == true) {
+                        await _loadStories();
+                      }
                     },
                     onTravelMapPressed:
                     widget.onTravelMapPressed,
