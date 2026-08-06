@@ -1,113 +1,140 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-
-// Supabase 연결 시 주석 해제
-// import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tops/services/profile_service.dart';
+import 'package:tops/services/profile_stats_service.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+  const ProfilePage({
+    super.key,
+  });
 
   @override
-  State<ProfilePage> createState() => _ProfilePageState();
+  State<ProfilePage> createState() =>
+      _ProfilePageState();
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  static const Color _primaryBlue = Color(0xFF6680F5);
-  static const Color _lightChartBlue = Color(0xFF6680FF);
-  static const Color _middleChartBlue = Color(0xFF4A5FBC);
-  static const Color _darkChartBlue = Color(0xFF35468F);
+  static const Color _primaryBlue =
+  Color(0xFF6680F5);
 
-  // 현재 화면 확인용 임시 데이터
-  String _greetingName = 'Eunji';
-  String _userName = 'Cho Eunji';
+  static const Color _lightChartBlue =
+  Color(0xFF6680FF);
+
+  static const Color _middleChartBlue =
+  Color(0xFF4A5FBC);
+
+  static const Color _darkChartBlue =
+  Color(0xFF35468F);
+
+  /*
+   * 화면을 처음 열었을 때 잠시 사용할 기본값입니다.
+   *
+   * 실제 데이터는 initState()에서 _loadProfile()을 호출하여
+   * ProfileService를 통해 Supabase에서 가져옵니다.
+   */
+  String _greetingName = 'TOPS Traveler';
+  String _userName = 'TOPS Traveler';
   String _city = 'London';
+
   String _currentLevel = 'City Wanderer';
   String _nextLevel = 'Local Expert';
 
   String? _profileImageUrl;
 
-  int _placeCount = 12;
-  int _photoCount = 35;
-  int _wishCount = 4;
+  /*
+   * Supabase 통계 데이터
+   *
+   * Places:
+   * 현재 사용자가 방문하거나 기록한 장소 개수
+   *
+   * Photos:
+   * 현재 사용자의 story_images 사진 행 개수
+   *
+   * Wish:
+   * 현재 사용자의 wishlist 행 개수
+   */
+  int _placeCount = 0;
+  int _photoCount = 0;
+  int _wishCount = 0;
 
-  double _levelProgress = 0.82;
+  double _levelProgress = 0;
 
-  double _cafeRate = 0.22;
-  double _restaurantRate = 0.47;
-  double _cultureRate = 0.31;
+  double _cafeRate = 0;
+  double _restaurantRate = 0;
+  double _cultureRate = 0;
 
-  bool _isLoading = false;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-
-    // Supabase 연결 시 주석 해제
-    // _loadProfile();
+    _loadProfilePage();
   }
 
-  /*
-  Future<void> _loadProfile() async {
-    setState(() {
-      _isLoading = true;
-    });
+  Future<void> _loadProfilePage() async {
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
     try {
-      final supabase = Supabase.instance.client;
-      final user = supabase.auth.currentUser;
+      /*
+     * 프로필 기본 정보와 통계는 서로 다른 서비스에서 조회한다.
+     *
+     * 통계 쿼리에 문제가 생겨도
+     * 사용자 이름·위치·프로필 사진 조회는 영향을 받지 않는다.
+     */
+      final Future<ProfileData> profileFuture =
+      ProfileService.getCurrentProfile();
 
-      if (user == null) {
-        throw Exception('User is not logged in.');
+      final Future<ProfileStatsData> statsFuture =
+      ProfileStatsService.getCurrentUserStatsSafely();
+
+      final ProfileData profile =
+      await profileFuture;
+
+      final ProfileStatsData stats =
+      await statsFuture;
+
+      if (!mounted) {
+        return;
       }
 
-      final profile = await supabase
-          .from('profiles')
-          .select()
-          .eq('id', user.id)
-          .single();
-
-      if (!mounted) return;
-
       setState(() {
-        _userName =
-            profile['display_name']?.toString() ?? 'TOPS User';
-
-        _greetingName =
-            profile['nickname']?.toString() ?? _userName;
-
-        _city =
-            profile['city']?.toString() ?? 'London';
-
-        _currentLevel =
-            profile['level_name']?.toString() ?? 'City Wanderer';
-
-        _nextLevel =
-            profile['next_level_name']?.toString() ?? 'Local Expert';
-
+        _greetingName = profile.userName;
+        _userName = profile.userName;
+        _city = profile.location;
         _profileImageUrl =
-            profile['profile_image_url']?.toString();
+            profile.profileImageUrl;
 
-        _levelProgress =
-            (profile['level_progress'] as num?)?.toDouble() ?? 0;
-
-        _cafeRate =
-            (profile['cafe_rate'] as num?)?.toDouble() ?? 0;
-
-        _restaurantRate =
-            (profile['restaurant_rate'] as num?)?.toDouble() ?? 0;
-
-        _cultureRate =
-            (profile['culture_rate'] as num?)?.toDouble() ?? 0;
+        _placeCount = stats.placeCount;
+        _photoCount = stats.photoCount;
+        _wishCount = stats.wishCount;
       });
-    } catch (error) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to load profile: $error'),
-        ),
+    } catch (error, stackTrace) {
+      debugPrint(
+        'Profile page loading error: $error',
       );
+
+      debugPrintStack(
+        stackTrace: stackTrace,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Failed to load profile information.',
+            ),
+          ),
+        );
     } finally {
       if (mounted) {
         setState(() {
@@ -116,7 +143,6 @@ class _ProfilePageState extends State<ProfilePage> {
       }
     }
   }
-  */
 
   @override
   Widget build(BuildContext context) {
@@ -126,20 +152,27 @@ class _ProfilePageState extends State<ProfilePage> {
           ? const Center(
         child: CircularProgressIndicator(),
       )
-          : SingleChildScrollView(
-        padding: const EdgeInsets.only(bottom: 135),
-        child: Column(
-          children: [
-            _buildTopSection(),
-            _buildStatistics(),
-            const SizedBox(height: 8),
-            _buildMenuSection(),
-          ],
+          : RefreshIndicator(
+        onRefresh: _loadProfilePage,
+        child: SingleChildScrollView(
+          physics:
+          const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.only(
+            bottom: 135,
+          ),
+          child: Column(
+            children: [
+              _buildTopSection(),
+              _buildStatistics(),
+              const SizedBox(height: 8),
+              _buildMenuSection(),
+            ],
+          ),
         ),
       ),
     );
   }
-
+  // 여기부터 기존 _buildTopSection() 이하 코드를 그대로 둡니다.
   Widget _buildTopSection() {
     return SizedBox(
       height: 500,

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tops/Main/main_shell.dart';
 import 'package:tops/Main/widgets/app_top_bar.dart';
 import 'category_page.dart';
 import 'continue_exploring_page.dart';
@@ -27,6 +28,10 @@ class _HomePageState extends State<HomePage> {
   String? _placesError;
   List<Map<String, dynamic>> _places = [];
 
+  String _userName = 'TOPS Traveler';
+  String _location = 'London';
+  String? _profileImageUrl;
+
   final List<String> _categories = const [
     'Home',
     'Cafe',
@@ -37,7 +42,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _loadPlaces();
+    _loadHomeData();
 
     _bannerTimer = Timer.periodic(
       const Duration(seconds: 3),
@@ -53,6 +58,113 @@ class _HomePageState extends State<HomePage> {
         );
       },
     );
+  }
+
+  Future<void> _loadHomeData() async {
+    await Future.wait([
+      _loadProfile(),
+      _loadPlaces(),
+    ]);
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final User? user =
+          Supabase.instance.client.auth.currentUser;
+
+      if (user == null) {
+        throw const AuthException(
+          'You must be logged in.',
+        );
+      }
+
+      final Map<String, dynamic>? profile =
+      await Supabase.instance.client
+          .from('profiles')
+          .select(
+        'user_name, location, city, '
+            'profile_image_url, avatar_path',
+      )
+          .eq('id', user.id)
+          .maybeSingle();
+
+      final Map<String, dynamic> metadata =
+          user.userMetadata ?? <String, dynamic>{};
+
+      final String userName = _firstNonEmpty([
+        profile?['user_name'],
+        metadata['user_name'],
+        metadata['full_name'],
+        metadata['name'],
+        user.email?.split('@').first,
+      ], fallback: 'TOPS Traveler');
+
+      final String location = _firstNonEmpty([
+        profile?['city'],
+        profile?['location'],
+        metadata['location'],
+      ], fallback: 'London');
+
+      final String? profileImageUrl =
+      _firstNonEmptyOrNull([
+        profile?['profile_image_url'],
+        metadata['avatar_url'],
+        metadata['picture'],
+      ]);
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _userName = userName;
+        _location = location;
+        _profileImageUrl = profileImageUrl;
+      });
+    } catch (error) {
+      debugPrint('프로필 조회 오류: $error');
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _userName = 'TOPS Traveler';
+        _location = 'London';
+        _profileImageUrl = null;
+      });
+    }
+  }
+
+  String _firstNonEmpty(
+      List<dynamic> values, {
+        required String fallback,
+      }) {
+    for (final dynamic value in values) {
+      final String text =
+          value?.toString().trim() ?? '';
+
+      if (text.isNotEmpty) {
+        return text;
+      }
+    }
+
+    return fallback;
+  }
+
+  String? _firstNonEmptyOrNull(
+      List<dynamic> values,
+      ) {
+    for (final dynamic value in values) {
+      final String text =
+          value?.toString().trim() ?? '';
+
+      if (text.isNotEmpty) {
+        return text;
+      }
+    }
+
+    return null;
   }
 
   Future<void> _loadPlaces() async {
@@ -114,13 +226,11 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    const userName = 'Traveler';
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: _loadPlaces,
+          onRefresh: _loadHomeData,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(
@@ -133,11 +243,16 @@ class _HomePageState extends State<HomePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 ArchiveTopBar(
-                  userName: userName,
-                  location: 'London',
-                  profileImageUrl: null,
+                  userName: _userName,
+                  location: _location,
+                  profileImageUrl: _profileImageUrl,
                   onProfilePressed: () {
-                    // TODO: 프로필 화면 이동
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const MainShell(index: 3,),
+                      ),
+                    );
                   },
                   onLocationPressed: () {
                     // TODO: 위치 선택

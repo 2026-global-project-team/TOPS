@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tops/Screen/Archive/create_archive_page.dart';
 import 'package:tops/Screen/My/profile_page.dart';
 import '../Screen/Explore/pages/explore_page.dart';
 import '../Screen/Home/home_page.dart';
@@ -203,7 +204,7 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
               const Divider(height: 1, color: Color(0xFFE5E7EB)),
               _buildQuickMenuItem(
                 title: 'New Story',
-                onTap: () => _showComingSoon('New Story'),
+                onTap: () => CreateArchivePage(),
               ),
               const Divider(height: 1, color: Color(0xFFE5E7EB)),
               _buildQuickMenuItem(

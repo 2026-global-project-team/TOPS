@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../Main/widgets/app_top_bar.dart';
+import '../../services/profile_service.dart';
+
 import 'create_archive_page.dart';
 import 'models/story.dart';
 import 'widgets/story_card.dart';
@@ -19,10 +21,17 @@ class ArchivePage extends StatefulWidget {
   final VoidCallback onTravelMapPressed;
 
   @override
-  State<ArchivePage> createState() => _ArchivePageState();
+  State<ArchivePage> createState() =>
+      _ArchivePageState();
 }
 
 class _ArchivePageState extends State<ArchivePage> {
+  String _userName = 'TOPS Traveler';
+  String _location = 'London';
+  String? _profileImageUrl;
+
+  bool _isProfileLoading = true;
+
   final List<Story> _stories = [
     Story(
       id: '2',
@@ -49,116 +58,215 @@ class _ArchivePageState extends State<ArchivePage> {
   @override
   void initState() {
     super.initState();
+
     _sortStories();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      /*
+       * profile_service.dart의 getCurrentProfile()은
+       * 현재 ProfileData를 반환한다.
+       */
+      final ProfileData profile =
+      await ProfileService.getCurrentProfile();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _userName = profile.userName;
+        _location = profile.location;
+        _profileImageUrl = profile.profileImageUrl;
+        _isProfileLoading = false;
+      });
+    } catch (error, stackTrace) {
+      debugPrint(
+        'Archive profile loading error: $error',
+      );
+
+      debugPrintStack(
+        stackTrace: stackTrace,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _userName = 'TOPS Traveler';
+        _location = 'London';
+        _profileImageUrl = null;
+        _isProfileLoading = false;
+      });
+    }
+  }
+
+  Future<void> _refreshArchive() async {
+    await _loadProfile();
+
+    /*
+     * 나중에 stories를 Supabase에서 조회하게 되면
+     * 이곳에서 story 조회 함수도 함께 호출하면 된다.
+     */
   }
 
   void _sortStories() {
     _stories.sort(
-          (a, b) => b.visitedAt.compareTo(a.visitedAt),
+          (Story a, Story b) {
+        return b.visitedAt.compareTo(
+          a.visitedAt,
+        );
+      },
     );
   }
 
   void _toggleWish(String storyId) {
-    final index = _stories.indexWhere(
-          (story) => story.id == storyId,
+    final int index = _stories.indexWhere(
+          (Story story) {
+        return story.id == storyId;
+      },
     );
 
-    if (index == -1) return;
+    if (index == -1) {
+      return;
+    }
 
     setState(() {
-      final selectedStory = _stories[index];
+      final Story selectedStory =
+      _stories[index];
 
-      _stories[index] = selectedStory.copyWith(
-        isWish: !selectedStory.isWish,
-      );
+      _stories[index] =
+          selectedStory.copyWith(
+            isWish: !selectedStory.isWish,
+          );
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F5FF),
+      backgroundColor:
+      const Color(0xFFF4F5FF),
       body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: ArchiveTopBar(
-                userName: 'Eunji',
-                location: 'London',
-                profileImageUrl: null,
-                onProfilePressed: widget.onProfilePressed,
-                onLocationPressed: () {
-                  debugPrint('지역 선택');
-                },
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: TripSummaryCard(
-                  tripTitle: 'London Trip',
-                  visitedPlacesCount: 12,
-                  onPlaceCountPressed: () {
-                    debugPrint('Places 버튼 클릭');
-                  },
-                  onNewStoryPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const CreateArchivePage(),
-                      ),
+        child: RefreshIndicator(
+          onRefresh: _refreshArchive,
+          child: CustomScrollView(
+            physics:
+            const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: ArchiveTopBar(
+                  userName: _isProfileLoading
+                      ? ''
+                      : _userName,
+                  location: _location,
+                  profileImageUrl:
+                  _profileImageUrl,
+                  onProfilePressed:
+                  widget.onProfilePressed,
+                  onLocationPressed: () {
+                    debugPrint(
+                      'Location button pressed',
                     );
                   },
-                  onTravelMapPressed: widget.onTravelMapPressed,
-                  onWishPressed: widget.onWishPressed,
                 ),
               ),
-            ),
-            const SliverToBoxAdapter(
-              child: SizedBox(height: 20),
-            ),
-            if (_stories.isEmpty)
-              const SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(
-                  child: Text(
-                    '아직 작성한 기록이 없습니다.',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 15,
+
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding:
+                  const EdgeInsets.only(
+                    top: 8,
+                  ),
+                  child: TripSummaryCard(
+                    tripTitle: 'London Trip',
+                    visitedPlacesCount: 12,
+                    onPlaceCountPressed: () {
+                      debugPrint(
+                        'Places button pressed',
+                      );
+                    },
+                    onNewStoryPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) {
+                            return const CreateArchivePage();
+                          },
+                        ),
+                      );
+                    },
+                    onTravelMapPressed:
+                    widget.onTravelMapPressed,
+                    onWishPressed:
+                    widget.onWishPressed,
+                  ),
+                ),
+              ),
+
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 20),
+              ),
+
+              if (_stories.isEmpty)
+                const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: Text(
+                      'No stories yet.',
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                SliverPadding(
+                  padding:
+                  const EdgeInsets.fromLTRB(
+                    16,
+                    0,
+                    16,
+                    110,
+                  ),
+                  sliver: SliverList(
+                    delegate:
+                    SliverChildBuilderDelegate(
+                          (
+                          BuildContext context,
+                          int index,
+                          ) {
+                        final Story story =
+                        _stories[index];
+
+                        return StoryCard(
+                          key: ValueKey(
+                            story.id,
+                          ),
+                          story: story,
+                          onPressed: () {
+                            debugPrint(
+                              '${story.title} detail page',
+                            );
+                          },
+                          onWishPressed: () {
+                            _toggleWish(
+                              story.id,
+                            );
+                          },
+                        );
+                      },
+                      childCount:
+                      _stories.length,
                     ),
                   ),
                 ),
-              )
-            else
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(
-                  16,
-                  0,
-                  16,
-                  110,
-                ),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                      final story = _stories[index];
-
-                      return StoryCard(
-                        key: ValueKey(story.id),
-                        story: story,
-                        onPressed: () {
-                          debugPrint('${story.title} 상세 화면 이동');
-                        },
-                        onWishPressed: () {
-                          _toggleWish(story.id);
-                        },
-                      );
-                    },
-                    childCount: _stories.length,
-                  ),
-                ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
