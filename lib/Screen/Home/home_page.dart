@@ -14,16 +14,12 @@ import 'widgets/home_widgets.dart';
 class HomePage extends StatefulWidget {
   const HomePage({
     super.key,
-    this.onProfilePressed,
+    required this.onArchivePressed,
+    required this.onProfilePressed,
   });
 
-  /*
-   * MainShell에서 Profile 탭으로 이동하는 함수를
-   * 전달할 수 있도록 만든다.
-   *
-   * MainShell에서 연결하지 않아도 HomePage는 실행된다.
-   */
-  final VoidCallback? onProfilePressed;
+  final VoidCallback onArchivePressed;
+  final VoidCallback onProfilePressed;
 
   @override
   State<HomePage> createState() =>
@@ -253,7 +249,7 @@ class _HomePageState extends State<HomePage> {
                      * MainShell에서 전달받은 함수가 있으면
                      * Profile 탭으로 이동한다.
                      */
-                    widget.onProfilePressed?.call();
+                    widget.onProfilePressed();
                   },
                   onLocationPressed: () {
                     // TODO: 위치 선택 기능 연결
@@ -354,9 +350,8 @@ class _HomePageState extends State<HomePage> {
     _selectedCategoryIndex];
 
     return CategoryPlacesList(
-      category: category,
-      places:
-      _placesByCategory(category),
+      title: 'Trending This Week',
+      places: _placesByCategory(category),
     );
   }
 
@@ -380,19 +375,8 @@ class _HomePageState extends State<HomePage> {
       children: [
         HomeSectionHeader(
           title: 'Archive',
-          onMorePressed: () {
-            ScaffoldMessenger.of(context)
-              ..hideCurrentSnackBar()
-              ..showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Archive page will be connected soon.',
-                  ),
-                ),
-              );
-          },
+          onMorePressed: widget.onArchivePressed,
         ),
-
         const SizedBox(height: 12),
 
         ArchivePlacesList(
