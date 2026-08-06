@@ -1,32 +1,43 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:tops/Screen/login/widgets/login_background.dart';
 import 'package:tops/Screen/login/widgets/signup_header.dart';
-import 'package:tops/Screen/Explore/pages/explore_page.dart';
 import 'package:tops/Main/main_shell.dart';
+
 import 'widgets/onboarding_step.dart';
 import 'widgets/signup_form_step.dart';
 import 'signup_complete_step.dart';
 
 class SignupPage extends StatefulWidget {
-  const SignupPage({super.key});
+  final int initialStep;
+
+  const SignupPage({
+    super.key,
+    this.initialStep = 0,
+  });
 
   @override
-  State<SignupPage> createState() => _SignupPageState();
+  State<SignupPage> createState() =>
+      _SignupPageState();
 }
 
 class _SignupPageState extends State<SignupPage> {
-  int _currentStep = 0;
+  late int _currentStep;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _currentStep = widget.initialStep;
+  }
 
   @override
   Widget build(BuildContext context) {
     return loginBackground(
       child: Column(
         children: [
-          SignupHeader (
+          SignupHeader(
             currentStep: _currentStep,
           ),
-
           Expanded(
             child: _buildStepContent(),
           ),
@@ -47,8 +58,10 @@ class _SignupPageState extends State<SignupPage> {
 
       case 1:
         return OnboardingStep(
-          imagePath: 'assets/images/onboarding_1.png',
-          title: 'Discover more than the landmarks',
+          imagePath:
+          'assets/images/onboarding_1.png',
+          title:
+          'Discover more than the landmarks',
           description:
           'Find hidden gems and explore local places beyond the tourist trail.',
           currentPage: 0,
@@ -58,8 +71,10 @@ class _SignupPageState extends State<SignupPage> {
 
       case 2:
         return OnboardingStep(
-          imagePath: 'assets/images/onboarding_2.png',
-          title: 'Your journey supports\nlocal communities',
+          imagePath:
+          'assets/images/onboarding_2.png',
+          title:
+          'Your journey supports\nlocal communities',
           description:
           'Discover local cafés, shops, and cultural spaces that make each neighborhood unique.',
           currentPage: 1,
@@ -69,8 +84,10 @@ class _SignupPageState extends State<SignupPage> {
 
       case 3:
         return OnboardingStep(
-          imagePath: 'assets/images/onboarding_3.png',
-          title: 'Discover locally. Travel responsibly.',
+          imagePath:
+          'assets/images/onboarding_3.png',
+          title:
+          'Discover locally. Travel responsibly.',
           description:
           'Explore local places and support the communities behind them.',
           currentPage: 2,
@@ -81,21 +98,27 @@ class _SignupPageState extends State<SignupPage> {
       case 4:
         return SignupCompleteStep(
           onStartExploring: () {
-            // 나중에 메인 화면을 만든 뒤 연결
-            Navigator.pushReplacement(
+            Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(
-                builder: (_) => const MainShell(),
+                builder: (_) =>
+                const MainShell(),
               ),
+                  (route) => false,
             );
           },
         );
+
       default:
         return const SizedBox.shrink();
     }
   }
 
   void _nextStep() {
+    if (_currentStep >= 4) {
+      return;
+    }
+
     setState(() {
       _currentStep++;
     });

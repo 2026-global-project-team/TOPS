@@ -1,21 +1,8 @@
 class Story {
-  //title
-  // → Good dinner
-  //
-  // location
-  // → Camden, London, UK
-  //
-  // visitedAt
-  // → 2026-10-20
-  //
-  // imageUrls
-  // → 기록에 첨부한 사진 목록
-  //
-  // isWish
-  // → 찜 여부
-
-  final String id;
+  final int id;
+  final int placeId;
   final String title;
+  final String content;
   final String location;
   final DateTime visitedAt;
   final List<String> imageUrls;
@@ -23,7 +10,9 @@ class Story {
 
   const Story({
     required this.id,
+    required this.placeId,
     required this.title,
+    required this.content,
     required this.location,
     required this.visitedAt,
     required this.imageUrls,
@@ -31,8 +20,10 @@ class Story {
   });
 
   Story copyWith({
-    String? id,
+    int? id,
+    int? placeId,
     String? title,
+    String? content,
     String? location,
     DateTime? visitedAt,
     List<String>? imageUrls,
@@ -40,7 +31,9 @@ class Story {
   }) {
     return Story(
       id: id ?? this.id,
+      placeId: placeId ?? this.placeId,
       title: title ?? this.title,
+      content: content ?? this.content,
       location: location ?? this.location,
       visitedAt: visitedAt ?? this.visitedAt,
       imageUrls: imageUrls ?? this.imageUrls,

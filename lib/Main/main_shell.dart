@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:tops/Screen/Archive/create_archive_page.dart';
 import 'package:tops/Screen/My/profile_page.dart';
 import '../Screen/Explore/pages/explore_page.dart';
 import '../Screen/Home/home_page.dart';
 import '../Screen/Archive/archive_page.dart';
+import '../Wish/wish_page.dart';
+import '../Screen/Archive/travel_map_page.dart';
 
 class MainShell extends StatefulWidget {
   final int? index;
@@ -17,7 +20,10 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> with SingleTickerProviderStateMixin {
-  int _selectedIndex = 0; //화면 뭐부터 띄울지 1은 Explore 0은 Home
+  int _selectedIndex = 0;
+  int _previousIndex = 0;
+  int _travelMapPreviousIndex = 2;
+
   bool _isQuickMenuOpen = false;
 
   late final AnimationController _menuController;
@@ -25,22 +31,39 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
   late final Animation<double> _menuScaleAnimation;
   late final Animation<double> _menuOpacityAnimation;
 
-  final List<Widget> _pages = const [
-    HomePage(),
-    ExplorePage(),
-    ArchivePage(),
-    ProfilePage(),
-  ];
+  late final List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
 
+    _pages = [
+      const HomePage(),
+      const ExplorePage(),
+
+      ArchivePage(
+        onWishPressed: _openWishPage,
+        onProfilePressed: () {
+          _selectPage(3);
+        },
+        onTravelMapPressed: _openTravelMapPage,
+      ),
+
+      const ProfilePage(),
+
+      WishPage(
+        onBackPressed: _closeWishPage,
+      ),
+      TravelMapPage(
+        onBackPressed: _closeTravelMapPage,
+      ),
+    ];
+
     final receivedIndex = widget.index;
 
     if (receivedIndex != null &&
         receivedIndex >= 0 &&
-        receivedIndex <= 4) {
+        receivedIndex <= 5) {
       _selectedIndex = receivedIndex;
     } else {
       _selectedIndex = 0;
@@ -110,7 +133,41 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
       _selectedIndex = index;
     });
   }
+  void _openWishPage() {
+    _closeQuickMenu();
 
+    setState(() {
+      if (_selectedIndex != 4) {
+        _previousIndex = _selectedIndex;
+      }
+
+      _selectedIndex = 4;
+    });
+  }
+
+  void _closeWishPage() {
+    setState(() {
+      _selectedIndex = _previousIndex;
+    });
+  }
+
+  void _openTravelMapPage() {
+    _closeQuickMenu();
+
+    setState(() {
+      if (_selectedIndex != 5) {
+        _travelMapPreviousIndex = _selectedIndex;
+      }
+
+      _selectedIndex = 5;
+    });
+  }
+
+  void _closeTravelMapPage() {
+    setState(() {
+      _selectedIndex = _travelMapPreviousIndex;
+    });
+  }
   void _showComingSoon(String featureName) {
     _closeQuickMenu();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -147,12 +204,12 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
               const Divider(height: 1, color: Color(0xFFE5E7EB)),
               _buildQuickMenuItem(
                 title: 'New Story',
-                onTap: () => _showComingSoon('New Story'),
+                onTap: () => CreateArchivePage(),
               ),
               const Divider(height: 1, color: Color(0xFFE5E7EB)),
               _buildQuickMenuItem(
                 title: 'Wishlist',
-                onTap: () => _showComingSoon('Wishlist'),
+                onTap: _openWishPage,
               ),
             ],
           ),
@@ -314,7 +371,11 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
     required IconData selectedIcon,
     required String label,
   }) {
-    final isSelected = _selectedIndex == index;
+    final isSelected =
+        _selectedIndex == index ||
+            ((_selectedIndex == 4 ||
+                _selectedIndex == 5) &&
+                index == 2);
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,

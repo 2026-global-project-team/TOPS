@@ -9,7 +9,12 @@ import '../services/place_service.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 
 class ExplorePage extends StatefulWidget {
-  const ExplorePage({super.key});
+  const ExplorePage({
+    super.key,
+    this.isPlaceSelectionMode = false,
+  });
+
+  final bool isPlaceSelectionMode;
 
   @override
   State<ExplorePage> createState() => _ExplorePageState();
@@ -312,10 +317,39 @@ class _ExplorePageState extends State<ExplorePage> {
     }
   }
 
+
+  void _confirmSelectedPlace() {
+    final Map<String, dynamic>? selectedPlace = _selectedPlace;
+
+    if (selectedPlace == null) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Please select a place.',
+            ),
+          ),
+        );
+
+      return;
+    }
+
+    Navigator.pop<Map<String, dynamic>>(
+      context,
+      Map<String, dynamic>.from(selectedPlace),
+    );
+  }
+
   Widget _buildSearchArea() {
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+        padding: EdgeInsets.fromLTRB(
+          widget.isPlaceSelectionMode ? 66 : 16,
+          12,
+          16,
+          0,
+        ),
         child: Column(
           children: [
             Material(
@@ -665,50 +699,71 @@ class _ExplorePageState extends State<ExplorePage> {
 
                     const SizedBox(height: 26),
 
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: () {},
-                            icon: const Icon(
-                              Icons.favorite_border,
+                    if (widget.isPlaceSelectionMode)
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: _confirmSelectedPlace,
+                          icon: const Icon(
+                            Icons.check_circle_outline,
+                          ),
+                          label: const Text(
+                            'Select Place',
+                          ),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: _primaryColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 15,
                             ),
-                            label: const Text('저장'),
-                            style:
-                            OutlinedButton.styleFrom(
-                              padding:
-                              const EdgeInsets.symmetric(
-                                vertical: 14,
-                              ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          flex: 2,
-                          child: FilledButton.icon(
-                            onPressed: () {
-                              _openDirections(place);
-                            },
-                            icon: const Icon(
-                              Icons.directions_walk,
-                            ),
-                            label: const Text(
-                              '도보 길찾기',
-                            ),
-                            style:
-                            FilledButton.styleFrom(
-                              backgroundColor:
-                              _primaryColor,
-                              padding:
-                              const EdgeInsets.symmetric(
-                                vertical: 14,
+                      )
+                    else
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                // TODO: Wish 저장 기능 연결
+                              },
+                              icon: const Icon(
+                                Icons.favorite_border,
+                              ),
+                              label: const Text('Save'),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 2,
+                            child: FilledButton.icon(
+                              onPressed: () {
+                                _openDirections(place);
+                              },
+                              icon: const Icon(
+                                Icons.directions_walk,
+                              ),
+                              label: const Text(
+                                'Walking Directions',
+                              ),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: _primaryColor,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                   ],
                 ),
               ),
@@ -856,6 +911,27 @@ class _ExplorePageState extends State<ExplorePage> {
               ),
             ],
           ),
+          if (widget.isPlaceSelectionMode)
+            Positioned(
+              top: 12,
+              left: 12,
+              child: SafeArea(
+                child: Material(
+                  color: Colors.white,
+                  shape: const CircleBorder(),
+                  elevation: 4,
+                  child: IconButton(
+                    onPressed: () {
+                      Navigator.maybePop(context);
+                    },
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           _buildSearchArea(),
           _buildMapButtons(),
           _buildPlaceCard(),
