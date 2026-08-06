@@ -385,22 +385,22 @@ class HorizontalPlacesList extends StatelessWidget {
 class CategoryPlacesList extends StatelessWidget {
   const CategoryPlacesList({
     super.key,
-    required this.category,
+    required this.title,
     required this.places,
   });
 
-  final String category;
+  final String title;
   final List<Map<String, dynamic>> places;
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      key: ValueKey(category),
+      key: ValueKey(title),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 20),
         Text(
-          '$category Places',
+          title,
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,

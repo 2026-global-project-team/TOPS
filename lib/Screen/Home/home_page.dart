@@ -14,23 +14,18 @@ import '../Archive/widgets/story_card.dart';
 import '../../services/wish_service.dart';
 import '../../services/story_service.dart';
 
-
 // Supabase 조회, 선택한 탭 상태,
 // 화면 이동, 어떤 데이터를 보여줄지 결정
 
 class HomePage extends StatefulWidget {
   const HomePage({
     super.key,
-    this.onProfilePressed,
+    required this.onArchivePressed,
+    required this.onProfilePressed,
   });
 
-  /*
-   * MainShell에서 Profile 탭으로 이동하는 함수를
-   * 전달할 수 있도록 만든다.
-   *
-   * MainShell에서 연결하지 않아도 HomePage는 실행된다.
-   */
-  final VoidCallback? onProfilePressed;
+  final VoidCallback onArchivePressed;
+  final VoidCallback onProfilePressed;
 
   @override
   State<HomePage> createState() =>
@@ -167,6 +162,7 @@ class _HomePageState extends State<HomePage> {
 
       setState(() {
         _isPlacesLoading = false;
+        _placesError = null;
       });
     } catch (error, stackTrace) {
       debugPrint(
@@ -482,9 +478,8 @@ class _HomePageState extends State<HomePage> {
     _selectedCategoryIndex];
 
     return CategoryPlacesList(
-      category: category,
-      places:
-      _placesByCategory(category),
+      title: 'Trending This Week',
+      places: _placesByCategory(category),
     );
   }
 
@@ -508,19 +503,8 @@ class _HomePageState extends State<HomePage> {
       children: [
         HomeSectionHeader(
           title: 'Archive',
-          onMorePressed: () {
-            ScaffoldMessenger.of(context)
-              ..hideCurrentSnackBar()
-              ..showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Archive page will be connected soon.',
-                  ),
-                ),
-              );
-          },
+          onMorePressed: widget.onArchivePressed,
         ),
-
         const SizedBox(height: 12),
 
         ArchivePlacesList(
