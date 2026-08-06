@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tops/Main/main_shell.dart';
 import 'package:tops/Main/widgets/app_top_bar.dart';
 import 'package:tops/services/profile_service.dart';
 import 'category_page.dart';
@@ -8,22 +9,23 @@ import 'search_page.dart';
 import 'widgets/home_banner.dart';
 import 'widgets/home_widgets.dart';
 
+import '../Archive/models/story.dart';
+import '../Archive/widgets/story_card.dart';
+import '../../services/wish_service.dart';
+import '../../services/story_service.dart';
+
 // Supabase 조회, 선택한 탭 상태,
 // 화면 이동, 어떤 데이터를 보여줄지 결정
 
 class HomePage extends StatefulWidget {
   const HomePage({
     super.key,
-    this.onProfilePressed,
+    required this.onArchivePressed,
+    required this.onProfilePressed,
   });
 
-  /*
-   * MainShell에서 Profile 탭으로 이동하는 함수를
-   * 전달할 수 있도록 만든다.
-   *
-   * MainShell에서 연결하지 않아도 HomePage는 실행된다.
-   */
-  final VoidCallback? onProfilePressed;
+  final VoidCallback onArchivePressed;
+  final VoidCallback onProfilePressed;
 
   @override
   State<HomePage> createState() =>
@@ -150,6 +152,15 @@ class _HomePageState extends State<HomePage> {
           data,
         );
 
+        _placesError = null;
+      });
+      await _applyPlaceWishState();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
         _isPlacesLoading = false;
         _placesError = null;
       });
@@ -171,6 +182,118 @@ class _HomePageState extends State<HomePage> {
         _isPlacesLoading = false;
         _placesError = error.toString();
       });
+    }
+  }
+  Future<void> _togglePlaceWish(
+      Map<String, dynamic> place,
+      ) async {
+    final int? placeId = int.tryParse(
+      place['id']?.toString() ?? '',
+    );
+
+    if (placeId == null) {
+      return;
+    }
+
+    try {
+      final bool isWished =
+      await WishService.togglePlaceWish(
+        placeId,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _places = _places.map(
+              (Map<String, dynamic> item) {
+            final int? itemId = int.tryParse(
+              item['id']?.toString() ?? '',
+            );
+
+            if (itemId == placeId) {
+              return {
+                ...item,
+                'is_wish': isWished,
+              };
+            }
+
+            return item;
+          },
+        ).toList();
+      });
+    } catch (error, stackTrace) {
+      debugPrint(
+        'Place wish toggle error: $error',
+      );
+
+      debugPrintStack(
+        stackTrace: stackTrace,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Failed to update the place wish.',
+            ),
+          ),
+        );
+    }
+  }
+  Future<void> _applyPlaceWishState() async {
+    try {
+      final List<Map<String, dynamic>> wishedPlaces =
+      await WishService.getWishedPlaces();
+
+      final Set<int> wishedPlaceIds = wishedPlaces
+          .map((Map<String, dynamic> place) {
+        final dynamic id = place['id'];
+
+        if (id is num) {
+          return id.toInt();
+        }
+
+        return int.tryParse(
+          id?.toString() ?? '',
+        );
+      })
+          .whereType<int>()
+          .toSet();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _places = _places.map(
+              (Map<String, dynamic> place) {
+            final int? placeId = int.tryParse(
+              place['id']?.toString() ?? '',
+            );
+
+            return {
+              ...place,
+              'is_wish': placeId != null &&
+                  wishedPlaceIds.contains(placeId),
+            };
+          },
+        ).toList();
+      });
+    } catch (error, stackTrace) {
+      debugPrint(
+        'Place wish state loading error: $error',
+      );
+
+      debugPrintStack(
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -249,11 +372,12 @@ class _HomePageState extends State<HomePage> {
                   profileImageUrl:
                   _profileImageUrl,
                   onProfilePressed: () {
-                    /*
-                     * MainShell에서 전달받은 함수가 있으면
-                     * Profile 탭으로 이동한다.
-                     */
-                    widget.onProfilePressed?.call();
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const MainShell(index: 3,),
+                      ),
+                    );
                   },
                   onLocationPressed: () {
                     // TODO: 위치 선택 기능 연결
@@ -354,9 +478,8 @@ class _HomePageState extends State<HomePage> {
     _selectedCategoryIndex];
 
     return CategoryPlacesList(
-      category: category,
-      places:
-      _placesByCategory(category),
+      title: 'Trending This Week',
+      places: _placesByCategory(category),
     );
   }
 
@@ -380,23 +503,13 @@ class _HomePageState extends State<HomePage> {
       children: [
         HomeSectionHeader(
           title: 'Archive',
-          onMorePressed: () {
-            ScaffoldMessenger.of(context)
-              ..hideCurrentSnackBar()
-              ..showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Archive page will be connected soon.',
-                  ),
-                ),
-              );
-          },
+          onMorePressed: widget.onArchivePressed,
         ),
-
         const SizedBox(height: 12),
 
         ArchivePlacesList(
           places: archivePlaces,
+          onWishPressed: _togglePlaceWish,
         ),
 
         const SizedBox(height: 24),
@@ -423,6 +536,7 @@ class _HomePageState extends State<HomePage> {
           places: trendingPlaces,
           cardWidth: 145,
           imageHeight: 112,
+          onWishPressed: _togglePlaceWish,
         ),
 
         const SizedBox(height: 24),
@@ -447,6 +561,7 @@ class _HomePageState extends State<HomePage> {
           places: continuePlaces,
           cardWidth: 126,
           imageHeight: 105,
+          onWishPressed: _togglePlaceWish,
         ),
       ],
     );

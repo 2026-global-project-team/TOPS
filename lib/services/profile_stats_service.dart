@@ -11,11 +11,6 @@ class ProfileStatsData {
     required this.photoCount,
     required this.wishCount,
   });
-
-  const ProfileStatsData.empty()
-      : placeCount = 0,
-        photoCount = 0,
-        wishCount = 0;
 }
 
 class ProfileStatsService {
@@ -26,7 +21,8 @@ class ProfileStatsService {
 
   static Future<ProfileStatsData>
   getCurrentUserStats() async {
-    final User? user = _supabase.auth.currentUser;
+    final User? user =
+        _supabase.auth.currentUser;
 
     if (user == null) {
       throw const AuthException(
@@ -36,20 +32,7 @@ class ProfileStatsService {
 
     final String userId = user.id;
 
-    /*
-     * 중요:
-     *
-     * 아래 통계 쿼리는 현재 예상한 관계를 기준으로 작성했다.
-     *
-     * stories.user_id
-     * stories.place_id
-     * story_images.story_id
-     * wishlist.user_id
-     *
-     * 실제 Supabase 컬럼명이 다르면
-     * 해당 컬럼명만 실제 스키마에 맞게 변경해야 한다.
-     */
-
+    // 1. 현재 사용자의 stories 조회
     final List<dynamic> storyRows =
     await _supabase
         .from('stories')
@@ -57,48 +40,57 @@ class ProfileStatsService {
         .eq('user_id', userId);
 
     final List<Map<String, dynamic>> stories =
-    storyRows
-        .map(
-          (dynamic row) =>
-      Map<String, dynamic>.from(
+    storyRows.map((dynamic row) {
+      return Map<String, dynamic>.from(
         row as Map,
-      ),
-    )
-        .toList();
+      );
+    }).toList();
 
-    final Set<String> placeIds = stories
-        .map(
-          (Map<String, dynamic> story) =>
-      story['place_id']
-          ?.toString()
-          .trim() ??
-          '',
-    )
-        .where(
-          (String id) => id.isNotEmpty,
-    )
+    // 동일한 장소에 여러 Archive가 있어도
+    // Places는 한 번만 계산
+    final Set<int> uniquePlaceIds = stories
+        .map((Map<String, dynamic> story) {
+      final dynamic value =
+      story['place_id'];
+
+      if (value is num) {
+        return value.toInt();
+      }
+
+      return int.tryParse(
+        value?.toString() ?? '',
+      );
+    })
+        .whereType<int>()
         .toSet();
 
-    final int placeCount = placeIds.length;
+    final int placeCount =
+        uniquePlaceIds.length;
 
-    final List<String> storyIds = stories
-        .map(
-          (Map<String, dynamic> story) =>
-      story['id']?.toString().trim() ??
-          '',
-    )
-        .where(
-          (String id) => id.isNotEmpty,
-    )
+    // 2. 현재 사용자의 story ID 목록
+    final List<int> storyIds = stories
+        .map((Map<String, dynamic> story) {
+      final dynamic value = story['id'];
+
+      if (value is num) {
+        return value.toInt();
+      }
+
+      return int.tryParse(
+        value?.toString() ?? '',
+      );
+    })
+        .whereType<int>()
         .toList();
 
+    // 3. story_images 개수 조회
     int photoCount = 0;
 
     if (storyIds.isNotEmpty) {
       final List<dynamic> imageRows =
       await _supabase
           .from('story_images')
-          .select('id')
+          .select('story_id')
           .inFilter(
         'story_id',
         storyIds,
@@ -107,40 +99,27 @@ class ProfileStatsService {
       photoCount = imageRows.length;
     }
 
+    // 4. wishlist 개수 조회
     final List<dynamic> wishRows =
     await _supabase
         .from('wishlist')
-        .select('id')
+        .select('place_id')
         .eq('user_id', userId);
 
-    final int wishCount = wishRows.length;
+    final int wishCount =
+        wishRows.length;
+
+    debugPrint(
+      'Profile stats → '
+          'places: $placeCount, '
+          'photos: $photoCount, '
+          'wish: $wishCount',
+    );
 
     return ProfileStatsData(
       placeCount: placeCount,
       photoCount: photoCount,
       wishCount: wishCount,
     );
-  }
-
-  static Future<ProfileStatsData>
-  getCurrentUserStatsSafely() async {
-    try {
-      return await getCurrentUserStats();
-    } catch (error, stackTrace) {
-      debugPrint(
-        'Profile stats loading error: $error',
-      );
-
-      debugPrintStack(
-        stackTrace: stackTrace,
-      );
-
-      /*
-       * 통계 테이블 또는 컬럼 연결이 아직 맞지 않더라도
-       * ProfilePage 전체가 비정상 화면이 되지 않게
-       * 통계만 0으로 반환한다.
-       */
-      return const ProfileStatsData.empty();
-    }
   }
 }

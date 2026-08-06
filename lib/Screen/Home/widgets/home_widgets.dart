@@ -171,9 +171,12 @@ class ArchivePlacesList extends StatelessWidget {
   const ArchivePlacesList({
     super.key,
     required this.places,
+    required this.onWishPressed,
   });
 
   final List<Map<String, dynamic>> places;
+  final ValueChanged<Map<String, dynamic>>
+  onWishPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -207,10 +210,15 @@ class ArchivePlacesList extends StatelessWidget {
                   height: 205,
                   borderRadius: 18,
                 ),
-                const Positioned(
+                Positioned(
                   top: 10,
                   right: 10,
-                  child: HomeFavoriteButton(),
+                  child: HomeFavoriteButton(
+                    isWished: place['is_wish'] == true,
+                    onPressed: () {
+                      onWishPressed(place);
+                    },
+                  ),
                 ),
                 Positioned(
                   left: 10,
@@ -252,12 +260,15 @@ class HorizontalPlacesList extends StatelessWidget {
     required this.places,
     required this.cardWidth,
     required this.imageHeight,
+    required this.onWishPressed,
   });
 
   final List<Map<String, dynamic>> places;
   final double cardWidth;
   final double imageHeight;
 
+  final ValueChanged<Map<String, dynamic>>
+  onWishPressed;
   @override
   Widget build(BuildContext context) {
     if (places.isEmpty) {
@@ -292,10 +303,15 @@ class HorizontalPlacesList extends StatelessWidget {
                       height: imageHeight,
                       borderRadius: 14,
                     ),
-                    const Positioned(
+                    Positioned(
                       top: 8,
                       right: 8,
-                      child: HomeFavoriteButton(),
+                      child: HomeFavoriteButton(
+                        isWished: place['is_wish'] == true,
+                        onPressed: () {
+                          onWishPressed(place);
+                        },
+                      ),
                     ),
                   ],
                 ),
@@ -369,22 +385,22 @@ class HorizontalPlacesList extends StatelessWidget {
 class CategoryPlacesList extends StatelessWidget {
   const CategoryPlacesList({
     super.key,
-    required this.category,
+    required this.title,
     required this.places,
   });
 
-  final String category;
+  final String title;
   final List<Map<String, dynamic>> places;
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      key: ValueKey(category),
+      key: ValueKey(title),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 20),
         Text(
-          '$category Places',
+          title,
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -549,21 +565,34 @@ class HomeNetworkImage extends StatelessWidget {
 }
 
 class HomeFavoriteButton extends StatelessWidget {
-  const HomeFavoriteButton({super.key});
+  const HomeFavoriteButton({
+    super.key,
+    required this.isWished,
+    required this.onPressed,
+  });
+
+  final bool isWished;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 28,
-      height: 28,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-      ),
-      child: const Icon(
-        Icons.favorite_border,
-        color: homePrimaryColor,
-        size: 17,
+    return Material(
+      color: Colors.white,
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onPressed,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: 28,
+          height: 28,
+          child: Icon(
+            isWished
+                ? Icons.favorite
+                : Icons.favorite_border,
+            color: homePrimaryColor,
+            size: 17,
+          ),
+        ),
       ),
     );
   }

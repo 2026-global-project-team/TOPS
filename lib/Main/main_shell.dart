@@ -38,7 +38,14 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
     super.initState();
 
     _pages = [
-      const HomePage(),
+      HomePage(
+        onArchivePressed: () {
+          _selectPage(2);
+        },
+        onProfilePressed: () {
+          _selectPage(3);
+        },
+      ),
       const ExplorePage(),
 
       ArchivePage(
