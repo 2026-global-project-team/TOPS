@@ -8,6 +8,8 @@ import 'search_page.dart';
 import 'widgets/home_banner.dart';
 import 'widgets/home_widgets.dart';
 
+// supabase조회, 선택한 탭 상태, 화면 이동, 어떤 데이터 보여줄지 결정
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 

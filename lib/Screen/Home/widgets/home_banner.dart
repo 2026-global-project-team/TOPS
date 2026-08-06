@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-
+//배너 자동 슬라이드
 class HomeBanner extends StatefulWidget {
   const HomeBanner({super.key});
 
