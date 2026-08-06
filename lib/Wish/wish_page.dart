@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../Screen/Archive/models/story.dart';
 import '../Screen/Archive/widgets/story_card.dart';
-
-// TODO: Supabase 연결 시 아래 import 주석 해제
-// import 'package:supabase_flutter/supabase_flutter.dart';
-// ============================================================
+import '../services/wish_service.dart';
 
 class WishPage extends StatefulWidget {
   const WishPage({
@@ -29,7 +26,6 @@ class _WishPageState extends State<WishPage> {
 
   bool _isLoading = false;
 
-  late List<Story> _wishStories;
 
   // ============================================================
   // 현재는 화면 확인용 임시 장소 데이터
@@ -37,58 +33,66 @@ class _WishPageState extends State<WishPage> {
   // 나중에 Supabase favorites + places 테이블에서 조회한 데이터로
   // 아래 리스트를 교체하면 됨
   // ============================================================
-  List<Map<String, dynamic>> _wishPlaces = [
-    {
-      'id': 1,
-      'name': 'Bibimbap To Go Cannon Street',
-      'address':
-      '13 St Swithin\'s Ln, London EC4N 8AL UK',
-      'image_url':
-      'https://images.unsplash.com/photo-1555396273-367ea4eb4db5'
-          '?auto=format&fit=crop&w=1200&q=80',
-      'delivery': true,
-      'takeaway': true,
-      'is_wish': true,
-    },
-    {
-      'id': 2,
-      'name': 'The Corner Shop',
-      'address': 'Camden, London, UK',
-      'image_url':
-      'https://images.unsplash.com/photo-1441986300917-64674bd600d8'
-          '?auto=format&fit=crop&w=1200&q=80',
-      'delivery': true,
-      'takeaway': true,
-      'is_wish': true,
-    },
-    {
-      'id': 3,
-      'name': 'Local Coffee House',
-      'address': 'Soho, London, UK',
-      'image_url':
-      'https://images.unsplash.com/photo-1554118811-1e0d58224f24'
-          '?auto=format&fit=crop&w=1200&q=80',
-      'delivery': false,
-      'takeaway': true,
-      'is_wish': true,
-    },
-  ];
+  List<Map<String, dynamic>> _wishPlaces = [];
+
+  List<Story> _wishStories = [];
 
   @override
   void initState() {
     super.initState();
+    _loadWishes();
+  }
 
-    // 전달받은 Story 중 찜한 Story만 표시
-    _wishStories = widget.initialStories
-        .where((story) => story.isWish)
-        .toList();
+  Future<void> _loadWishes() async {
+    setState(() {
+      _isLoading = true;
+    });
 
-    // ============================================================
-    // TODO: Supabase 연결 시 아래 함수 호출 주석 해제
-    //
-    // _loadWishPlaces();
-    // _loadWishStories();
-    // ============================================================
+    try {
+      final List<Map<String, dynamic>>
+      places =
+      await WishService.getWishedPlaces();
+
+      final List<Story> stories =
+      await WishService.getWishedStories();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _wishPlaces = places;
+        _wishStories = stories;
+      });
+    } catch (error, stackTrace) {
+      debugPrint(
+        'Wish loading error: $error',
+      );
+
+      debugPrintStack(
+        stackTrace: stackTrace,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              'Wish Error: $error',
+            ),
+          ),
+        );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   // ============================================================
@@ -227,20 +231,53 @@ class _WishPageState extends State<WishPage> {
     });
   }
 
-  void _removePlaceWish(
+  Future<void> _removePlaceWish(
       Map<String, dynamic> place,
-      ) {
-    setState(() {
-      _wishPlaces.removeWhere(
-            (item) => item['id'] == place['id'],
-      );
-    });
+      ) async {
+    final int? placeId = int.tryParse(
+      place['id']?.toString() ?? '',
+    );
 
-    // ============================================================
-    // TODO: Supabase 연결 시 아래 함수 호출
-    //
-    // _deletePlaceWish(place['id']);
-    // ============================================================
+    if (placeId == null) {
+      return;
+    }
+
+    try {
+      await WishService.removePlaceWish(
+        placeId,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _wishPlaces.removeWhere(
+              (Map<String, dynamic> item) {
+            return item['id']?.toString() ==
+                placeId.toString();
+          },
+        );
+      });
+    } catch (error) {
+      debugPrint(
+        'Place wish removal error: $error',
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Failed to remove the place.',
+            ),
+          ),
+        );
+    }
   }
 
   // ============================================================
@@ -269,17 +306,43 @@ class _WishPageState extends State<WishPage> {
   }
   */
 
-  void _removeStoryWish(Story story) {
-    setState(() {
-      _wishStories.remove(story);
-    });
+  Future<void> _removeStoryWish(
+      Story story,
+      ) async {
+    try {
+      await WishService.removeStoryWish(
+        story.id,
+      );
 
-    // ============================================================
-    // TODO: Supabase 연결 시 Story의 id를 이용해
-    // stories 테이블 is_wish 값을 false로 변경
-    //
-    // _updateStoryWish(story.id, false);
-    // ============================================================
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _wishStories.removeWhere(
+              (Story item) =>
+          item.id == story.id,
+        );
+      });
+    } catch (error) {
+      debugPrint(
+        'Story wish removal error: $error',
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Failed to remove the story.',
+            ),
+          ),
+        );
+    }
   }
 
   @override

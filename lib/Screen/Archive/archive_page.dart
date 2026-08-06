@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../Main/widgets/app_top_bar.dart';
 import '../../services/profile_service.dart';
 import '../../services/story_service.dart';
+import '../../services/wish_service.dart';
 
 import 'create_archive_page.dart';
 import 'models/story.dart';
@@ -95,16 +96,30 @@ class _ArchivePageState extends State<ArchivePage> {
 
     try {
       final List<Story> stories =
-      await StoryService
-          .getCurrentUserStories();
+      await StoryService.getCurrentUserStories();
+
+      final Set<int> wishedStoryIds =
+      await WishService.getWishedStoryIds();
+
+      final List<Story> storiesWithWish =
+      stories.map(
+            (Story story) {
+          return story.copyWith(
+            isWish: wishedStoryIds.contains(
+              story.id,
+            ),
+          );
+        },
+      ).toList();
 
       if (!mounted) {
         return;
       }
 
       setState(() {
-        _stories = stories;
+        _stories = storiesWithWish;
         _isStoriesLoading = false;
+        _storiesError = null;
       });
     } catch (error, stackTrace) {
       debugPrint(
@@ -144,26 +159,61 @@ class _ArchivePageState extends State<ArchivePage> {
     );
   }
 
-  void _toggleWish(int storyId) {
+  Future<void> _toggleWish(int storyId) async {
     final int index = _stories.indexWhere(
-          (Story story) {
-        return story.id == storyId;
-      },
+          (Story story) => story.id == storyId,
     );
 
     if (index == -1) {
       return;
     }
 
-    setState(() {
-      final Story selectedStory =
-      _stories[index];
+    try {
+      /*
+     * 이미 Wish 상태면 삭제하고,
+     * Wish 상태가 아니면 story_wishlist에 추가한다.
+     *
+     * 반환값:
+     * true  = Wish 추가됨
+     * false = Wish 해제됨
+     */
+      final bool isWished =
+      await WishService.toggleStoryWish(
+        storyId,
+      );
 
-      _stories[index] =
-          selectedStory.copyWith(
-            isWish: !selectedStory.isWish,
-          );
-    });
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _stories[index] = _stories[index].copyWith(
+          isWish: isWished,
+        );
+      });
+    } catch (error, stackTrace) {
+      debugPrint(
+        'Archive story wish error: $error',
+      );
+
+      debugPrintStack(
+        stackTrace: stackTrace,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Failed to update the story wish.',
+            ),
+          ),
+        );
+    }
   }
 
   @override

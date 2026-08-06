@@ -1,8 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:tops/services/profile_service.dart';
-import 'package:tops/services/profile_stats_service.dart';
+import '../../services/profile_service.dart';
+import '../../services/profile_stats_service.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({
@@ -69,34 +69,20 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    _loadProfilePage();
+    _loadProfile();
   }
 
-  Future<void> _loadProfilePage() async {
-    if (mounted) {
-      setState(() {
-        _isLoading = true;
-      });
-    }
+  Future<void> _loadProfile() async {
+    setState(() {
+      _isLoading = true;
+    });
 
     try {
-      /*
-     * 프로필 기본 정보와 통계는 서로 다른 서비스에서 조회한다.
-     *
-     * 통계 쿼리에 문제가 생겨도
-     * 사용자 이름·위치·프로필 사진 조회는 영향을 받지 않는다.
-     */
-      final Future<ProfileData> profileFuture =
-      ProfileService.getCurrentProfile();
-
-      final Future<ProfileStatsData> statsFuture =
-      ProfileStatsService.getCurrentUserStatsSafely();
-
       final ProfileData profile =
-      await profileFuture;
+      await ProfileService.getCurrentProfile();
 
       final ProfileStatsData stats =
-      await statsFuture;
+      await ProfileStatsService.getCurrentUserStats();
 
       if (!mounted) {
         return;
@@ -106,13 +92,19 @@ class _ProfilePageState extends State<ProfilePage> {
         _greetingName = profile.userName;
         _userName = profile.userName;
         _city = profile.location;
-        _profileImageUrl =
-            profile.profileImageUrl;
+        _profileImageUrl = profile.profileImageUrl;
 
         _placeCount = stats.placeCount;
         _photoCount = stats.photoCount;
         _wishCount = stats.wishCount;
       });
+
+      debugPrint(
+        'Profile stats loaded: '
+            'places=${stats.placeCount}, '
+            'photos=${stats.photoCount}, '
+            'wish=${stats.wishCount}',
+      );
     } catch (error, stackTrace) {
       debugPrint(
         'Profile page loading error: $error',
@@ -129,9 +121,9 @@ class _ProfilePageState extends State<ProfilePage> {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'Failed to load profile information.',
+              'Profile Error: $error',
             ),
           ),
         );
@@ -153,10 +145,10 @@ class _ProfilePageState extends State<ProfilePage> {
         child: CircularProgressIndicator(),
       )
           : RefreshIndicator(
-        onRefresh: _loadProfilePage,
+        onRefresh: _loadProfile,
         child: SingleChildScrollView(
           physics:
-          const AlwaysScrollableScrollPhysics(),
+            const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.only(
             bottom: 135,
           ),
