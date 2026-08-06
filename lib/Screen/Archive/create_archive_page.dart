@@ -1,8 +1,10 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tops/Main/widgets/polaroidCard.dart';
 import 'package:tops/services/image_picker.dart';
+import 'package:tops/services/story_service.dart';
 
 class CreateArchivePage extends StatefulWidget {
   /// 나중에 카메라 또는 갤러리 기능을 연결할 때 사용한다.
@@ -117,6 +119,10 @@ class _CreateArchivePageState extends State<CreateArchivePage> {
   }
 
   Future<void> _saveArchive() async {
+    if (_isSaving) {
+      return;
+    }
+
     final String title =
     _titleController.text.trim();
 
@@ -137,6 +143,21 @@ class _CreateArchivePageState extends State<CreateArchivePage> {
       return;
     }
 
+    if (_selectedLocation == null ||
+        _selectedLocation!.trim().isEmpty) {
+      _showMessage(
+        'Please add a location.',
+      );
+      return;
+    }
+
+    if (_selectedDate == null) {
+      _showMessage(
+        'Please add a date.',
+      );
+      return;
+    }
+
     if (description.isEmpty) {
       _showMessage(
         'Please share your experience.',
@@ -144,9 +165,94 @@ class _CreateArchivePageState extends State<CreateArchivePage> {
       return;
     }
 
-    // 이후 저장 처리
-  }
+    setState(() {
+      _isSaving = true;
+    });
 
+    try {
+      await StoryService.createStory(
+        title: title,
+        description: description,
+        location: _selectedLocation!,
+        visitedAt: _selectedDate!,
+        images: List<File>.from(
+          _selectedImages,
+        ),
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      _showMessage(
+        'Your story has been saved.',
+      );
+
+      /*
+     * true를 반환해서 ArchivePage가
+     * 저장 완료 여부를 확인할 수 있게 한다.
+     */
+      Navigator.pop(context, true);
+    } on AuthException catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      _showMessage(error.message);
+    } on StorageException catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      debugPrint(
+        'Story image upload error: ${error.message}',
+      );
+
+      _showMessage(
+        'Failed to upload the photos.',
+      );
+    } on PostgrestException catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      debugPrint(
+        'Story database save error: '
+            '${error.message}',
+      );
+
+      debugPrint(
+        'Story database details: '
+            '${error.details}',
+      );
+
+      _showMessage(
+        'Failed to save the story.',
+      );
+    } catch (error, stackTrace) {
+      debugPrint(
+        'Create story error: $error',
+      );
+
+      debugPrintStack(
+        stackTrace: stackTrace,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      _showMessage(
+        'Something went wrong while saving.',
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
+  }
   void _goBack() {
     Navigator.maybePop(context);
   }
